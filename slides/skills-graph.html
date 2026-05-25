@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Skills — Interactive Graph</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e11;
+    --panel: #16161a;
+    --border: #2a2a35;
+    --text: #e8e8f0;
+    --muted: #8888a0;
+    --accent: #7c6af7;
+    --accent2: #4ec9b0;
+    --node-size: #f0f0f0;
+    --cat-devops: #4ec9b0;
+    --cat-agents: #f9c74f;
+    --cat-autonomous: #ff6b6b;
+    --cat-github: #6bcb77;
+    --cat-creative: #ff9f43;
+    --cat-data: #4dabf7;
+    --cat-mlops: #da77f2;
+    --cat-productivity: #ff8787;
+    --cat-research: #63e6be;
+    --cat-hermes: #7c6af7;
+    --cat-hwcomp: #748ffc;
+    --cat-media: #a29bfe;
+    --cat-smart: #fd79a8;
+    --cat-social: #fab1a0;
+    --cat-note: #81ecec;
+    --cat-planning: #ffeaa7;
+    --cat-red: #e17055;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  #header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  #header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  #header .subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .header-spacer { flex: 1; }
+  #node-count-label {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* ── LAYOUT ── */
+  #app {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR CONTROLS ── */
+  #sidebar {
+    width: 280px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    flex-shrink: 0;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .ctrl-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ctrl-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+  }
+
+  /* ── SLIDER CONTROLS ── */
+  .slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .slider-label {
+    font-size: 12px;
+    color: var(--text);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .slider-label span { font-size: 11px; color: var(--accent); font-weight: 600; min-width: 28px; text-align: right; }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--panel);
+  }
+
+  /* ── TOGGLE CHECKBOXES ── */
+  .toggle-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  .toggle-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+    font-size: 11px;
+  }
+  .toggle-item:hover { background: rgba(255,255,255,0.05); }
+  .toggle-item input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle-item .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── RADIO / SELECT ── */
+  .ctrl-select {
+    width: 100%;
+    background: #1e1e28;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 5px;
+    padding: 5px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+  }
+  .ctrl-select:focus { border-color: var(--accent); }
+
+  /* ── LEGEND ── */
+  .legend-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: background 0.1s;
+  }
+  .legend-item:hover { background: rgba(255,255,255,0.05); }
+  .legend-item .swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .legend-item .lname { flex: 1; color: var(--text); }
+  .legend-item .lcount { color: var(--muted); font-size: 10px; }
+
+  /* ── TOOLTIP ── */
+  #tooltip {
+    position: fixed;
+    background: #1e1e28;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 13px;
+    font-size: 12px;
+    color: var(--text);
+    max-width: 240px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 100;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  }
+  #tooltip.visible { opacity: 1; }
+  #tooltip .tt-name { font-weight: 600; font-size: 13px; margin-bottom: 5px; color: var(--accent); }
+  #tooltip .tt-desc { color: var(--muted); line-height: 1.4; margin-bottom: 6px; }
+  #tooltip .tt-meta { display: flex; flex-direction: column; gap: 2px; }
+  #tooltip .tt-tag {
+    display: inline-block;
+    background: rgba(124,106,247,0.2);
+    color: var(--accent);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 10px;
+    margin-right: 3px;
+    margin-bottom: 2px;
+  }
+  #tooltip .tt-cat {
+    display: inline-block;
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 10px;
+    margin-right: 3px;
+    color: #000;
+    font-weight: 600;
+  }
+
+  /* ── CANVAS ── */
+  #canvas-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  #canvas-wrap svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+  }
+  #canvas-wrap svg:active { cursor: grabbing; }
+
+  /* ── CONTEXT MENU ── */
+  #ctx-menu {
+    position: fixed;
+    background: #1e1e28;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 0;
+    min-width: 160px;
+    z-index: 200;
+    display: none;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  }
+  #ctx-menu.visible { display: block; }
+  .ctx-item {
+    padding: 7px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ctx-item:hover { background: rgba(255,255,255,0.08); }
+  .ctx-item .ckey { color: var(--muted); font-size: 10px; margin-left: auto; }
+  .ctx-sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* ── ZOOM CONTROLS ── */
+  #zoom-controls {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 5;
+  }
+  .zoom-btn {
+    width: 32px;
+    height: 32px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .zoom-btn:hover { background: #2a2a35; }
+
+  /* ── INFO PANEL (right) ── */
+  #info-panel {
+    position: absolute;
+    top: 12px;
+    right: 56px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 11px;
+    color: var(--muted);
+    z-index: 5;
+    display: flex;
+    gap: 14px;
+  }
+  #info-panel .inf { display: flex; flex-direction: column; gap: 2px; }
+  #info-panel .inf .val { font-size: 14px; font-weight: 600; color: var(--text); }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>Hermes Skills — Interactive Graph</h1>
+  <span class="subtitle">Force-directed · drag · zoom · filter</span>
+  <div class="header-spacer"></div>
+  <span id="node-count-label">Loading…</span>
+</div>
+
+<div id="app">
+
+  <!-- ── SIDEBAR ── -->
+  <div id="sidebar">
+
+    <!-- Layout -->
+    <div class="ctrl-section">
+      <div class="ctrl-title">Layout</div>
+      <div class="slider-row">
+        <div class="slider-label">Link distance <span id="linkDistVal">80</span></div>
+        <input type="range" id="linkDist" min="20" max="200" value="80" step="5">
+      </div>
+      <div class="slider-row">
+        <div class="slider-label">Repulsion <span id="repulseVal">-300</span></div>
+        <input type="range" id="repulse" min="-800" max="-50" value="-300" step="10">
+      </div>
+      <div class="slider-row">
+        <div class="slider-label">Gravity <span id="gravityVal">0.05</span></div>
+        <input type="range" id="gravity" min="0" max="0.2" value="0.05" step="0.01">
+      </div>
+    </div>
+
+    <!-- Nodes -->
+    <div class="ctrl-section">
+      <div class="ctrl-title">Nodes</div>
+      <div class="slider-row">
+        <div class="slider-label">Min radius <span id="minRVal">4</span></div>
+        <input type="range" id="minR" min="2" max="16" value="4" step="1">
+      </div>
+      <div class="slider-row">
+        <div class="slider-label">Max radius <span id="maxRVal">22</span></div>
+        <input type="range" id="maxR" min="10" max="50" value="22" step="1">
+      </div>
+      <div class="slider-row">
+        <div class="slider-label">Category hub boost <span id="hubBoostVal">3.0×</span></div>
+        <input type="range" id="hubBoost" min="1" max="6" value="3" step="0.5">
+      </div>
+      <div class="slider-row">
+        <label class="slider-label" style="gap:8px;cursor:pointer;">
+          <input type="checkbox" id="showLabels" checked style="accent-color:var(--accent);width:13px;height:13px;">
+          Show labels
+        </label>
+      </div>
+      <div class="slider-row">
+        <label class="slider-label" style="gap:8px;cursor:pointer;">
+          <input type="checkbox" id="showHubs" checked style="accent-color:var(--accent);width:13px;height:13px;">
+          Show category hubs
+        </label>
+      </div>
+    </div>
+
+    <!-- Edges -->
+    <div class="ctrl-section">
+      <div class="ctrl-title">Edges</div>
+      <label class="toggle-item" style="grid-column:span 2">
+        <input type="checkbox" id="edgeCategory" checked>
+        <div class="dot" style="background:var(--cat-devops)"></div> Same category
+      </label>
+      <label class="toggle-item" style="grid-column:span 2">
+        <input type="checkbox" id="edgeRelated" checked>
+        <div class="dot" style="background:#f9c74f;border:1px solid #333"></div> Related skills
+      </label>
+      <label class="toggle-item" style="grid-column:span 2">
+        <input type="checkbox" id="edgeTag" checked>
+        <div class="dot" style="background:#4dabf7;border:1px solid #333"></div> Shared tags
+      </label>
+      <div class="slider-row" style="margin-top:2px">
+        <div class="slider-label">Tag edge threshold <span id="tagThreshVal">1</span></div>
+        <input type="range" id="tagThresh" min="1" max="5" value="1" step="1">
+      </div>
+      <div class="slider-row">
+        <div class="slider-label">Edge opacity <span id="edgeOpacVal">0.4</span></div>
+        <input type="range" id="edgeOpac" min="0.05" max="1" value="0.4" step="0.05">
+      </div>
+    </div>
+
+    <!-- Filter by category -->
+    <div class="ctrl-section">
+      <div class="ctrl-title">Show categories</div>
+      <div class="toggle-grid" id="catToggles"></div>
+    </div>
+
+    <!-- Size by -->
+    <div class="ctrl-section">
+      <div class="ctrl-title">Size by</div>
+      <select class="ctrl-select" id="sizeBy">
+        <option value="equal">Equal size</option>
+        <option value="skillcount">Skill count per category</option>
+        <option value="tags">Tag breadth (more tags = larger)</option>
+        <option value="hub">Category hub (larger hubs)</option>
+      </select>
+    </div>
+
+    <!-- Legend -->
+    <div class="ctrl-section">
+      <div class="ctrl-title">Legend</div>
+      <div class="legend-grid" id="legend"></div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- ── CANVAS ── -->
+  <div id="canvas-wrap">
+    <svg id="graph"></svg>
+    <div id="zoom-controls">
+      <button class="zoom-btn" id="zoomIn" title="Zoom in">+</button>
+      <button class="zoom-btn" id="zoomOut" title="Zoom out">−</button>
+      <button class="zoom-btn" id="zoomReset" title="Reset view" style="font-size:11px;">⊙</button>
+    </div>
+    <div id="info-panel">
+      <div class="inf"><div class="val" id="statNodes">—</div>nodes</div>
+      <div class="inf"><div class="val" id="statEdges">—</div>edges</div>
+      <div class="inf"><div class="val" id="statCats">—</div>categories</div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Tooltip -->
+<div id="tooltip">
+  <div class="tt-name" id="tt-name"></div>
+  <div class="tt-desc" id="tt-desc"></div>
+  <div class="tt-meta" id="tt-meta"></div>
+</div>
+
+<!-- Context menu -->
+<div id="ctx-menu">
+  <div class="ctx-item" id="ctx-focus">Focus node ⌘F</div>
+  <div class="ctx-item" id="ctx-hide">Hide node H</div>
+  <div class="ctx-item" id="ctx-showAll">Show all nodes ⌘A</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" id="ctx-lock">Lock/unlock position L</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" id="ctx-copy">Copy skill name</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  DATA — all skills from the Hermes registry
+// ═══════════════════════════════════════════════════════════════
+const SKILLS = [
+  // ── AGENTS ──────────────────────────────────────────────
+  { name:"zoul",           category:"agents",       tags:["orchestrator","delegation","planning"], description:"Primary orchestrator agent — delegates tasks, manages workflows, coordinates subagents." },
+  { name:"codi",          category:"agents",       tags:["code","ingestion","refactoring","large-codebase"], description:"Code ingestion & refactoring specialist — understands, extracts, and restructures large codebases." },
+  { name:"coach",         category:"agents",       tags:["learning","guidance","skills"], description:"Learning & guidance agent — helps with skill development and agentic workflows." },
+  { name:"researcher",   category:"agents",       tags:["web","research","search","extraction"], description:"Web research agent — searches, extracts, and synthesizes information from the web." },
+  { name:"planner",       category:"agents",       tags:["planning","decomposition","tasks"], description:"Task decomposition agent — breaks complex tasks into actionable steps." },
+  { name:"coder",         category:"agents",       tags:["code","generation","write"], description:"Code generation specialist — writes features, scripts, and new code." },
+  { name:"reviewer",      category:"agents",       tags:["review","quality","qa","testing"], description:"Quality assurance agent — reviews code, runs tests, enforces standards." },
+  { name:"browser-agent", category:"agents",       tags:["browser","automation","scraping"], description:"Browser automation agent — uses Playwright for web interaction and scraping." },
+  { name:"journal",       category:"agents",       tags:["notion","logging","journal"], description:"Notion logging agent — records daily logs and journal entries." },
+  { name:"nginxmanagerbot",category:"agents",     tags:["dns","nginx","server"], description:"DNS & nginx management bot — handles server configuration and DNS records." },
+  { name:"automator",     category:"agents",       tags:["background","cron","tasks"], description:"Background task agent — runs recurring tasks and cron jobs autonomously." },
+  { name:"knowledge-manager",category:"agents",   tags:["memory","long-term","knowledge"], description:"Long-term memory curator — maintains and updates the knowledge base." },
+  { name:"heartbeat",     category:"agents",       tags:["periodic","checks","monitoring"], description:"Heartbeat workflow for proactive monitoring and alerts." },
+  { name:"zoul-delegation",category:"agents",     tags:["delegation","patterns"], description:"Delegation patterns migrated from OpenClaw — best practices for subagent spawning." },
+  { name:"zoul-soul",      category:"agents",       tags:["orchestrator","personality"], description:"Variant orchestrator with soul/personality — warm, witty, proactive coordination." },
+  { name:"media maker",   category:"agents",       tags:["video","media","creation"], description:"Media creation specialist — creates video content and multimedia." },
+  { name:"ubd-docx-generator",category:"agents",  tags:["ubd","docx","lesson-plan"], description:"Generate filled .docx UbD lesson plans from templates." },
+
+  // ── AUTONOMOUS AI AGENTS ────────────────────────────────
+  { name:"claude-code",   category:"autonomous-ai-agents", tags:["claude","pr","features","delegation"], description:"Delegate coding to Claude Code CLI — features, PRs, code review." },
+  { name:"codex",        category:"autonomous-ai-agents", tags:["openai","codex","pr","delegation"], description:"Delegate coding to OpenAI Codex CLI — features and PR review." },
+  { name:"opencode",     category:"autonomous-ai-agents", tags:["opencode","delegation","review"], description:"Delegate coding to OpenCode CLI — code review and PR handling." },
+  { name:"roadmap-engine",category:"autonomous-ai-agents",tags:["roadmap","planning","nightly"], description:"Long-horizon autonomous planning engine — runs nightly to plan ahead." },
+  { name:"self-improvement-engine",category:"autonomous-ai-agents",tags:["improvement","learn","skills"], description:"Self-improvement: process learnings, rank candidates, author new skills." },
+  { name:"kanban-codex-lane",category:"autonomous-ai-agents",tags:["kanban","codex","worker"], description:"Kanban worker using Codex CLI for autonomous task completion." },
+  { name:"multi-provider-llm-backoff",category:"autonomous-ai-agents",tags:["llm","multi-provider","fallback"], description:"Multi-provider LLM with exponential backoff — resilient API routing." },
+
+  // ── AUTONOMOUS CRON PIPELINE ──────────────────────────
+  { name:"autonomous-cron-pipeline",category:"autonomous-cron-pipeline",tags:["cron","multi-phase","pipeline","autonomous"], description:"Schedule multi-phase autonomous work as chained cron jobs with state files." },
+  { name:"kanban-orchestrator",category:"autonomous-cron-pipeline",tags:["kanban","orchestrator","decomposition"], description:"Decomposition playbook + anti-temptation rules for orchestrating Kanban workers." },
+  { name:"kanban-worker", category:"autonomous-cron-pipeline",tags:["kanban","worker","tasks"], description:"Best practices for Kanban worker agents — pitfalls, examples, edge cases." },
+  { name:"nanobot-to-hermes-migration",category:"autonomous-cron-pipeline",tags:["nanobot","migration","hermes"], description:"Migrate a custom nanobot orchestration repo to stock Hermes Agent." },
+
+  // ── CREATIVE ───────────────────────────────────────────
+  { name:"architecture-diagram",category:"creative",tags:["svg","diagram","architecture","cloud"], description:"Dark-themed SVG architecture/cloud/infra diagrams as HTML." },
+  { name:"ascii-art",      category:"creative",  tags:["ascii","art","pyfiglet","cowsay"], description:"ASCII art generation — pyfiglet, cowsay, boxes, image-to-ASCII." },
+  { name:"ascii-video",     category:"creative",  tags:["ascii","video","mp4","gif"], description:"Convert video/audio to colored ASCII MP4/GIF output." },
+  { name:"baoyu-comic",    category:"creative",   tags:["comic","knowledge","educational"], description:"Knowledge comics (知识漫画) — educational, biography, tutorial." },
+  { name:"baoyu-infographic",category:"creative", tags:["infographic","visual","data"], description:"Infographics — 21 layouts × 21 styles (信息图, 可视化)." },
+  { name:"baoyu-article-illustrator",category:"creative",tags:["article","illustration","type","style"], description:"Article illustrations — type × style × palette consistency." },
+  { name:"claude-design",  category:"creative",   tags:["html","design","landing","prototype"], description:"Design one-off HTML artifacts — landing pages, decks, prototypes." },
+  { name:"comfyui",        category:"creative",   tags:["comfyui","image","video","generation"], description:"Generate images and video with ComfyUI — install, workflow, render." },
+  { name:"design-md",      category:"creative",   tags:["design","spec","token","google"], description:"Author/validate/export Google DESIGN.md token spec files." },
+  { name:"excalidraw",     category:"creative",   tags:["excalidraw","diagram","hand-drawn","arch"], description:"Hand-drawn Excalidraw JSON diagrams — arch, flow, sequences." },
+  { name:"humanizer",     category:"creative",   tags:["text","humanize","voice","ai"], description:"Humanize text — strip AI-isms, add real voice and natural tone." },
+  { name:"ideation",      category:"creative",   tags:["ideas","creativity","constraints"], description:"Generate project ideas via creative constraint-based ideation." },
+  { name:"manim-video",   category:"creative",   tags:["manim","animation","math","3blue1brown"], description:"Manim CE animations — 3Blue1Brown math and algorithm visualizations." },
+  { name:"p5js",          category:"creative",   tags:["p5js","generative","art","shaders","interactive"], description:"p5.js generative art, shaders, interactive sketches, 3D." },
+  { name:"pixel-art",     category:"creative",   tags:["pixel","art","nes","gameboy","pico-8"], description:"Pixel art with era palettes — NES, Game Boy, PICO-8." },
+  { name:"pretext",       category:"creative",   tags:["pretext","browser","demo","chenglou"], description:"Creative browser demos with @chenglou/prea ct." },
+  { name:"sketch",        category:"creative",   tags:["sketch","mockup","html","design"], description:"Throwaway HTML mockups — 2-3 design variants to compare." },
+  { name:"songwriting-and-ai-music",category:"creative",tags:["songwriting","music","suno","lyrics"], description:"Songwriting craft and Suno AI music prompt generation." },
+  { name:"touchdesigner-mcp",category:"creative",tags:["touchdesigner","mcp","realtime"], description:"Control a running TouchDesigner instance via MCP." },
+  { name:"popular-web-designs",category:"creative",tags:["design-system","css","html","stripe","linear"], description:"54 real design systems (Stripe, Linear, Vercel) as HTML/CSS." },
+
+  // ── DATA SCIENCE ────────────────────────────────────────
+  { name:"jupyter-live-kernel",category:"data-science",tags:["jupyter","python","notebook","kernel"], description:"Iterative Python via live Jupyter kernel (hamelnb)." },
+
+  // ── DEVOPS ─────────────────────────────────────────────
+  { name:"agent-os-architecture",category:"devops",tags:["agent-os","node","express","react","postgres"], description:"Architecture reference for ChonSong/agent-os — Node.js + Express + React + Postgres." },
+  { name:"canary-watch",    category:"devops",    tags:["deployment","monitoring","regression"], description:"Post-deploy monitoring — check deployed URLs for regressions." },
+  { name:"casaos-webhook-emitter-impl",category:"devops",tags:["casaos","webhook","go","service"], description:"Build casaos-webhook-emitter — Go service subscribing to CasaOS events." },
+  { name:"context-budget",  category:"devops",   tags:["context","window","token","audit"], description:"Audit context window consumption across loaded skills and agent context." },
+  { name:"cost-aware-llm-pipeline",category:"devops",tags:["llm","cost","routing","model"], description:"Cost optimization for LLM API usage — model routing by task type." },
+  { name:"deployment-patterns",category:"devops", tags:["deployment","ci cd","docker","kubernetes"], description:"Deployment workflows, CI/CD pipelines, Docker, health checks." },
+  { name:"docker-patterns", category:"devops",   tags:["docker","compose","security","networking"], description:"Docker and Docker Compose patterns for local dev, containers, production." },
+  { name:"git-workflow",    category:"devops",    tags:["git","branching","commit","workflow"], description:"Git workflow patterns — branching strategies, conventional commits." },
+  { name:"go",             category:"devops",    tags:["go","golang","build","test"], description:"Build, test, and run Go projects on the host system." },
+  { name:"hermes-docker-sync-setup",category:"devops",tags:["hermes","docker","sync","github"], description:"Set up portable Hermes Agent sync — private GitHub repo + rsync." },
+  { name:"infrastructure-as-code",category:"devops",tags:["terraform","cloudflare","aws","iac"], description:"Terraform workflows for Cloudflare, AWS, and server provisioning." },
+  { name:"multi-provider-api-calls",category:"devops",tags:["api","multi-provider","curl","jq"], description:"Call multiple LLM provider APIs — MiniMax, OpenRouter, OpenAI, etc." },
+  { name:"repo-catalog",   category:"devops",    tags:["repo","catalog","discovery","ideation"], description:"Create comprehensive repo catalog for ideation and discovery." },
+  { name:"repo-init",      category:"devops",    tags:["repo","init","monorepo","template"], description:"Initialize a new project repository from scratch." },
+  { name:"webhook-subscriptions",category:"devops",tags:["webhook","event","cron","agent"], description:"Event-driven agent runs via webhook subscriptions." },
+
+  // ── GITHUB ─────────────────────────────────────────────
+  { name:"codebase-inspection",category:"github", tags:["codebase","loc","languages","ratios","pygount"], description:"Inspect codebases with pygount — LOC, language ratios, complexity metrics." },
+  { name:"github-auth",     category:"github",    tags:["github","auth","token","ssh","gh"], description:"GitHub auth setup — HTTPS tokens, SSH keys, gh CLI login." },
+  { name:"github-code-review",category:"github",  tags:["github","pr","review","inline","diff"], description:"Review PR diffs with inline comments via gh or REST API." },
+  { name:"github-issues",  category:"github",    tags:["github","issues","triage","label","assign"], description:"Create, triage, label, and assign GitHub issues via gh or REST." },
+  { name:"github-pr-workflow",category:"github", tags:["github","pr","branch","commit","ci","merge"], description:"GitHub PR lifecycle — branch, commit, open, CI, merge." },
+  { name:"github-repo-management",category:"github",tags:["github","repo","clone","fork","release"], description:"Clone/create/fork repos; manage remotes, releases." },
+  { name:"repo-discovery", category:"github",    tags:["repo","discovery","find","assess"], description:"Locate, identify, and assess a user's code repositories." },
+
+  // ── HERMES ─────────────────────────────────────────────
+  { name:"hermes-agent",   category:"hermes",     tags:["hermes","cli","config","tools","delegation","gateway"], description:"Complete guide to Hermes Agent — CLI, config, delegation, gateway, tools." },
+  { name:"hermes-docker-workflow",category:"hermes",tags:["hermes","docker","container","workflow"], description:"Build, run, and troubleshoot Hermes Agent Docker container." },
+
+  // ── HERMES COMPUTER ─────────────────────────────────────
+  { name:"hermes-computer",category:"hermes-computer",tags:["hermes-computer","go","svelte","tiling","desktop"], description:"Build and extend hermes-web-computer — Go backend + Svelte 5 tiling desktop." },
+
+  // ── MCP ────────────────────────────────────────────────
+  { name:"native-mcp",     category:"mcp",        tags:["mcp","server","client","stdio","sse"], description:"Native MCP client — connect servers, register tools (stdio/HTTP)." },
+
+  // ── MEDIA ──────────────────────────────────────────────
+  { name:"gif-search",     category:"media",      tags:["gif","tenor","search","download"], description:"Search and download GIFs from Tenor via curl + jq." },
+  { name:"heartmula",      category:"media",      tags:["music","heartmula","suno","generation"], description:"HeartMuLa: Suno-like song generation from lyrics + tags." },
+  { name:"songsee",        category:"media",      tags:["audio","spectrogram","mel","mfcc","chroma"], description:"Audio spectrogram/feature extraction — mel, chroma, MFCC via CLI." },
+  { name:"spotify",        category:"media",      tags:["spotify","playback","playlist","devices"], description:"Spotify playback control — play, search, queue, manage playlists." },
+  { name:"youtube-content", category:"media",      tags:["youtube","transcript","summary","thread"], description:"YouTube transcripts to summaries, threads, and blog posts." },
+
+  // ── MLOPS ──────────────────────────────────────────────
+  { name:"huggingface-hub",category:"mlops",      tags:["huggingface","hf","model","dataset","download"], description:"HuggingFace hf CLI — search, download, upload models and datasets." },
+  { name:"evaluating-llms-harness",category:"mlops/evaluation",tags:["eval","benchmark","mmlu","haas"], description:"Evaluate LLMs across 60+ academic benchmarks — MMLU, HumanEval, etc." },
+  { name:"weights-and-biases",category:"mlops/evaluation",tags:["wandb","experiment","tracking","sweeps"], description:"W&B: log ML experiments, sweeps, model registry, dashboards." },
+  { name:"llama-cpp",      category:"mlops/inference",tags:["llama.cpp","gguf","inference","quantization"], description:"llama.cpp local GGUF inference + HuggingFace Hub model discovery." },
+  { name:"obliteratus",    category:"mlops/inference",tags:["abliterate","llm","refusal","bias"], description:"ABLITERATUS: ablate LLM refusals (diff-in-means)." },
+  { name:"outlines",       category:"mlops/inference",tags:["outlines","structured","json","pydantic"], description:"Outlines: structured JSON/regex/Pydantic LLM generation." },
+  { name:"serving-llms-vllm",category:"mlops/inference",tags:["vllm","serving","openai","quantization"], description:"vLLM high-throughput LLM serving — OpenAI API, quantization." },
+  { name:"audiocraft-audio-generation",category:"mlops/models",tags:["audiocraft","musicgen","audiogen","audio"], description:"AudioCraft MusicGen text-to-music and AudioGen text-to-sound." },
+  { name:"segment-anything-model",category:"mlops/models",tags:["sam","segmentation","image","zero-shot"], description:"SAM zero-shot image segmentation via points, boxes, masks." },
+  { name:"dspy",           category:"mlops/research",tags:["dspy","declarative","prompt","rag","compile"], description:"DSPy: declarative LM programs, auto-optimize prompts, RAG." },
+  { name:"axolotl",        category:"mlops/training",tags:["axolotl","fine-tuning","lora","dpo","grpo"], description:"Axolotl LLM fine-tuning — LoRA, DPO, GRPO, distributed training." },
+  { name:"fine-tuning-with-trl",category:"mlops/training",tags:["trl","sft","dpo","ppo","grpo","reward"], description:"TRL fine-tuning — SFT, DPO, PPO, GRPO, reward modeling for LLM RLHF." },
+  { name:"unsloth",        category:"mlops/training",tags:["unsloth","lora","fine-tuning","vram","fast"], description:"Unsloth: 2-5× faster LoRA/QLoRA fine-tuning with less VRAM." },
+
+  // ── NOTE TAKING ────────────────────────────────────────
+  { name:"obsidian",       category:"note-taking", tags:["obsidian","vault","notes","markdown"], description:"Read, search, create, and edit notes in the Obsidian vault." },
+
+  // ── PLANNING ───────────────────────────────────────────
+  { name:"blueprint",      category:"planning",   tags:["blueprint","plan","construction","steps"], description:"Turn a one-line objective into a step-by-step construction plan." },
+  { name:"nanobot-integration-plan",category:"planning",tags:["nanobot","hkuds","integration","python"], description:"Wire HKUDS/nanobot as the Python Agent Core into Hermes." },
+  { name:"product-lens",   category:"planning",   tags:["product","validate","why","diagnostics"], description:"Validate the 'why' before building — product diagnostics." },
+
+  // ── PRODUCTIVITY ───────────────────────────────────────
+  { name:"airtable",       category:"productivity",tags:["airtable","rest","api","crud","upsert"], description:"Airtable REST API via curl — records CRUD, filters, upserts." },
+  { name:"automation-workflows",category:"productivity",tags:["automation","workflow","zapier","n8n"], description:"Design and implement automation workflows across tools." },
+  { name:"casaos-backend-api-extension",category:"productivity",tags:["casaos","fastapi","backend","extension"], description:"Extend CasaOS FastAPI backend to add custom endpoints." },
+  { name:"gcalcli-calendar",category:"productivity",tags:["gcalcli","calendar","google","agenda"], description:"Google Calendar via gcalcli — today's agenda by default." },
+  { name:"google-workspace",category:"productivity",tags:["google","gmail","drive","docs","sheets"], description:"Google Workspace — Gmail, Calendar, Drive, Docs, Sheets via gws CLI." },
+  { name:"linear",         category:"productivity",tags:["linear","graphql","project","issues"], description:"Linear project management via GraphQL + curl." },
+  { name:"maps",          category:"productivity",tags:["maps","geocode","osm","route","timezone"], description:"Geocode, POIs, routes, timezones via OpenStreetMap/OSRM." },
+  { name:"nano-pdf",      category:"productivity",tags:["pdf","edit","typo","nl","prompt"], description:"Edit PDF text/typos/titles via natural language prompts." },
+  { name:"notion",        category:"productivity",tags:["notion","api","pages","databases","ntn"], description:"Notion API + ntn CLI — pages, databases, markdown, Workers." },
+  { name:"notion-api",    category:"productivity",tags:["notion","api","generic","node"], description:"Generic Notion API CLI (Node) — search, query, CRUD." },
+  { name:"ocr-and-documents",category:"productivity",tags:["ocr","pdf","pymupdf","marker","extract"], description:"Extract text from PDFs and scans — pymupdf, marker-pdf." },
+  { name:"powerpoint",    category:"productivity",tags:["powerpoint","pptx","slides","deck"], description:"Create, read, edit .pptx decks, slides, notes, templates." },
+  { name:"teac-assignment-writing",category:"productivity",tags:["teac","assignment","university","essay"], description:"Write TEAC university assignment portfolios." },
+  { name:"teams-meeting-pipeline",category:"productivity",tags:["teams","meeting","summary","pipeline"], description:"Microsoft Teams meeting summary pipeline via Hermes CLI." },
+  { name:"university-essay",category:"productivity",tags:["essay","university","research","academic"], description:"Research-backed university essays with strict formatting." },
+
+  // ── RED TEAMING ────────────────────────────────────────
+  { name:"godmode",       category:"red-teaming", tags:["jailbreak","llm","security","parsons"], description:"Jailbreak LLMs — Parseltongue, GODMODE, ULTRAPLINIAN attacks." },
+
+  // ── REPO TRANSMUTE ──────────────────────────────────────
+  { name:"repo-transmute", category:"repo-transmute",tags:["migration","codebase","ast","vision","llm"], description:"AI-powered code migration engine — vision-driven migration of codebases." },
+
+  // ── RESEARCH ───────────────────────────────────────────
+  { name:"arxiv",          category:"research",   tags:["arxiv","papers","search","keyword"], description:"Search arXiv papers by keyword, author, category, or paper ID." },
+  { name:"blogwatcher",    category:"research",   tags:["blog","rss","atom","feed","monitor"], description:"Monitor blogs and RSS/Atom feeds via blogwatcher-cli." },
+  { name:"html-in-canvas-monitor",category:"research",tags:["canvas","html","monitor","layout"], description:"Monitor Layout Subtree API (HTML-in-Canvas) experimental feature." },
+  { name:"llm-wiki",       category:"research",   tags:["llm","wiki","karpathy","knowledge"], description:"Karpathy's LLM Wiki — build and query interlinked markdown KB." },
+  { name:"polymarket",    category:"research",   tags:["polymarket","prediction","markets","orderbook"], description:"Query Polymarket — markets, prices, orderbooks, history." },
+
+  // ── SMART HOME ─────────────────────────────────────────
+  { name:"openhue",       category:"smart-home",  tags:["hue","philips","lights","scenes","openapi"], description:"Control Philips Hue lights, scenes, and rooms via OpenHue CLI." },
+  { name:"sonoscli",      category:"smart-home",  tags:["sonos","speaker","audio","group"], description:"Control Sonos speakers — discover, status, play, volume, group." },
+
+  // ── SOCIAL MEDIA ───────────────────────────────────────
+  { name:"xurl",          category:"social-media",tags:["x","twitter","post","dm","api"], description:"X/Twitter via xurl CLI — post, search, DM, media, v2 API." },
+  { name:"yuanbao",      category:"social-media",tags:["yuanbao","group","mention","wechat"], description:"Yuanbao (元宝) group management — @mention users, query members." },
+  { name:"discord-bot",   category:"social-media",tags:["discord","bot","rest","api","post"], description:"Post messages to Discord channels via REST API." },
+
+  // ── SOFTWARE DEVELOPMENT ────────────────────────────────
+  { name:"architecture-decision-records",category:"software-development",tags:["adr","architecture","decision","record"], description:"Capture architectural decisions as structured ADRs during development." },
+  { name:"autonomous-development",category:"software-development",tags:["autonomous","feature","spec","end-to-end"], description:"Build features end-to-end from spec — closed-loop autonomous development." },
+  { name:"benchmark",     category:"software-development",tags:["benchmark","performance","baseline","regression"], description:"Measure performance baselines and detect regressions." },
+  { name:"coding-standards",category:"software-development",tags:["coding","standards","naming","readability"], description:"Baseline cross-project coding conventions." },
+  { name:"debugging-hermes-tui-commands",category:"software-development",tags:["debug","tui","hermes","commands","ink"], description:"Debug Hermes TUI slash commands — Python, gateway, Ink UI." },
+  { name:"e2e-testing",    category:"software-development",tags:["e2e","playwright","testing","user-flow"], description:"Playwright E2E testing patterns — critical user flows." },
+  { name:"hermes-agent-skill-authoring",category:"software-development",tags:["skill","authoring","skil-md","format"], description:"Author in-repo SKILL.md — frontmatter, validator, structure." },
+  { name:"node-inspect-debugger",category:"software-development",tags:["node","debug","inspect","chrome","dap"], description:"Debug Node.js via --inspect + Chrome DevTools Protocol CLI." },
+  { name:"python-debugpy", category:"software-development",tags:["python","debug","debugpy","dap","repl"], description:"Debug Python via debugpy remote DAP and pdb REPL." },
+  { name:"requesting-code-review",category:"software-development",tags:["review","security","quality","auto-fix"], description:"Pre-commit code review — security scan, quality gates, auto-fix." },
+  { name:"search-first",   category:"software-development",tags:["search","research","codebase","tool"], description:"Research-before-coding workflow — search for existing tools." },
+  { name:"security-review",category:"software-development",tags:["security","owasp","secrets","auth"], description:"Security checklist — auth, input validation, secrets, OWASP." },
+  { name:"skill-selector", category:"software-development",tags:["skill","selector","auto-load","matching"], description:"Every-turn skill scorer — scores all skills, auto-loads matching ones." },
+  { name:"skill-selector-prep",category:"software-development",tags:["skill","prep","cron","weekly"], description:"Weekly cron skill prep — sync skill metadata for the selector." },
+  { name:"spike",         category:"software-development",tags:["spike","experiment","validate","prototype"], description:"Throwaway experiments to validate an idea before building." },
+  { name:"structured-code-review",category:"software-development",tags:["review","structured","format","quality"], description:"Structured code review output format." },
+  { name:"subagent-driven-development",category:"software-development",tags:["subagent","development","delegate","2-stage"], description:"Execute plans via delegate_task subagents — 2-stage review." },
+  { name:"svelte-development",category:"software-development",tags:["svelte","svelte5","runes","vite","frontend"], description:"Svelte 5 development — runes mode syntax, Vite build patterns." },
+  { name:"systematic-debugging",category:"software-development",tags:["debug","systematic","root-cause","4-phase"], description:"4-phase root cause debugging — understand before fixing." },
+  { name:"test-driven-development",category:"software-development",tags:["tdd","test","red-green","refactor"], description:"TDD workflow — RED-GREEN-REFACTOR, tests before code." },
+  { name:"vite-patterns", category:"software-development",tags:["vite","build","plugin","hmr","env"], description:"Vite build tool patterns — config, plugins, HMR, env vars." },
+  { name:"writing-plans", category:"software-development",tags:["plan","writing","implementation","tasks"], description:"Write implementation plans — bite-sized tasks, paths, code." },
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  COLORS & CATEGORIES
+// ═══════════════════════════════════════════════════════════════
+const CAT_COLORS = {
+  "agents":                  "#f9c74f",
+  "autonomous-ai-agents":    "#ff6b6b",
+  "autonomous-cron-pipeline":"#e07b7b",
+  "creative":                "#ff9f43",
+  "data-science":            "#74b9ff",
+  "devops":                  "#4ec9b0",
+  "github":                  "#6bcb77",
+  "hermes":                  "#7c6af7",
+  "hermes-computer":          "#748ffc",
+  "mcp":                     "#a29bfe",
+  "media":                   "#fd79a8",
+  "mlops":                   "#da77f2",
+  "mlops/evaluation":        "#be77f2",
+  "mlops/inference":         "#c77df2",
+  "mlops/models":            "#d77df2",
+  "mlops/research":           "#e77df2",
+  "mlops/training":           "#f77df2",
+  "note-taking":             "#81ecec",
+  "planning":               "#ffeaa7",
+  "productivity":            "#ff8787",
+  "red-teaming":             "#e17055",
+  "repo-transmute":          "#b8e994",
+  "research":                "#63e6be",
+  "smart-home":              "#fab1a0",
+  "social-media":            "#ffeaa7",
+  "software-development":    "#74b9ff",
+};
+
+const CAT_LABELS = {
+  "agents":                  "Agents",
+  "autonomous-ai-agents":    "AI Agents",
+  "autonomous-cron-pipeline":"Cron Pipeline",
+  "creative":                "Creative",
+  "data-science":            "Data Science",
+  "devops":                  "DevOps",
+  "github":                  "GitHub",
+  "hermes":                  "Hermes Core",
+  "hermes-computer":         "Hermes Computer",
+  "mcp":                     "MCP",
+  "media":                   "Media",
+  "mlops":                   "MLOps",
+  "mlops/evaluation":        "MLOps / Eval",
+  "mlops/inference":          "MLOps / Inference",
+  "mlops/models":             "MLOps / Models",
+  "mlops/research":           "MLOps / Research",
+  "mlops/training":           "MLOps / Training",
+  "note-taking":             "Note Taking",
+  "planning":               "Planning",
+  "productivity":            "Productivity",
+  "red-teaming":             "Red Teaming",
+  "repo-transmute":          "Repo Transmute",
+  "research":                "Research",
+  "smart-home":              "Smart Home",
+  "social-media":            "Social Media",
+  "software-development":    "Software Dev",
+};
+
+// Related skills (explicit edges)
+const RELATED = [
+  ["hermes-agent","hermes-docker-workflow"],
+  ["hermes-agent","hermes-agent-skill-authoring"],
+  ["hermes-agent","skill-selector"],
+  ["hermes-agent","hermes-computer"],
+  ["hermes-agent","native-mcp"],
+  ["hermes-agent","skill-selector-prep"],
+  ["hermes-agent","context-budget"],
+  ["autonomous-cron-pipeline","kanban-orchestrator"],
+  ["autonomous-cron-pipeline","kanban-worker"],
+  ["autonomous-cron-pipeline","self-improvement-engine"],
+  ["autonomous-cron-pipeline","roadmap-engine"],
+  ["claude-code","codex"],
+  ["claude-code","opencode"],
+  ["claude-code","subagent-driven-development"],
+  ["codex","opencode"],
+  ["github-pr-workflow","github-code-review"],
+  ["github-pr-workflow","github-issues"],
+  ["github-pr-workflow","github-auth"],
+  ["github-pr-workflow","github-repo-management"],
+  ["github-auth","github-repo-management"],
+  ["researcher","arxiv"],
+  ["researcher","blogwatcher"],
+  ["researcher","dogfood"],
+  ["researcher","repo-transmute"],
+  ["codi","repo-transmute"],
+  ["codi","codebase-inspection"],
+  ["coder","test-driven-development"],
+  ["coder","structured-code-review"],
+  ["coder","e2e-testing"],
+  ["coder","svelte-development"],
+  ["coder","vite-patterns"],
+  ["reviewer","e2e-testing"],
+  ["reviewer","security-review"],
+  ["reviewer","requesting-code-review"],
+  ["reviewer","structured-code-review"],
+  ["benchmark","python-debugpy"],
+  ["benchmark","node-inspect-debugger"],
+  ["deployment-patterns","docker-patterns"],
+  ["deployment-patterns","canary-watch"],
+  ["docker-patterns","git-workflow"],
+  ["docker-patterns","hermes-docker-workflow"],
+  ["autonomous-development","subagent-driven-development"],
+  ["autonomous-development","test-driven-development"],
+  ["autonomous-development","writing-plans"],
+  ["autonomous-development","systematic-debugging"],
+  ["planner","blueprint"],
+  ["planner","writing-plans"],
+  ["planner","nanobot-integration-plan"],
+  ["jupyter-live-kernel","benchmark"],
+  ["notion","journal"],
+  ["notion","obsidian"],
+  ["obsidian","note-taking"],
+  ["openhue","smart-home"],
+  ["sonoscli","smart-home"],
+  ["xurl","social-media"],
+  ["yuanbao","social-media"],
+  ["discord-bot","social-media"],
+  ["spotify","media"],
+  ["youtube-content","media"],
+  ["ascii-video","ascii-art"],
+  ["architecture-diagram","excalidraw"],
+  ["comfyui","image-gen"],
+  ["manim-video","math"],
+  ["llama-cpp","serving-llms-vllm"],
+  ["axolotl","fine-tuning-with-trl"],
+  ["axolotl","unsloth"],
+  ["fine-tuning-with-trl","unsloth"],
+  ["dspy","llm-wiki"],
+  ["obliteratus","evaluating-llms-harness"],
+  ["outlines","structured-code-review"],
+  ["llm-wiki","dspy"],
+  ["weights-and-biases","evaluating-llms-harness"],
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  BUILD GRAPH DATA
+// ═══════════════════════════════════════════════════════════════
+const skillSet = new Set(SKILLS.map(s => s.name));
+
+function buildGraph() {
+  const nodes = SKILLS.map(s => ({ ...s, id: s.name, r: 6 }));
+  const nodeByName = Object.fromEntries(nodes.map(n => [n.name, n]));
+
+  // Count skills per category
+  const catCount = {};
+  SKILLS.forEach(s => { catCount[s.category] = (catCount[s.category] || 0) + 1; });
+
+  // Edges
+  const edgeSet = new Set();
+  const edges = [];
+
+  function addEdge(a, b, type) {
+    if (a === b) return;
+    const key = [a, b].sort().join("\n");
+    if (edgeSet.has(key)) return;
+    edgeSet.add(key);
+    edges.push({ source: a, target: b, type });
+  }
+
+  // Category edges (same category = strong)
+  if (document.getElementById("edgeCategory").checked) {
+    for (const s of SKILLS) {
+      for (const t of SKILLS) {
+        if (s !== t && s.category === t.category) addEdge(s.name, t.name, "cat");
+      }
+    }
+  }
+
+  // Related skills edges
+  if (document.getElementById("edgeRelated").checked) {
+    for (const [a, b] of RELATED) {
+      if (skillSet.has(a) && skillSet.has(b)) addEdge(a, b, "rel");
+    }
+  }
+
+  // Tag-sharing edges
+  if (document.getElementById("edgeTag").checked) {
+    const thresh = parseInt(document.getElementById("tagThresh").value);
+    for (const s of SKILLS) {
+      for (const t of SKILLS) {
+        if (s !== t) {
+          const shared = s.tags.filter(tag => t.tags.includes(tag)).length;
+          if (shared >= thresh) addEdge(s.name, t.name, "tag");
+        }
+      }
+    }
+  }
+
+  return { nodes, edges, catCount };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  D3 SETUP
+// ═══════════════════════════════════════════════════════════════
+const svg = d3.select("#graph");
+const W = () => document.getElementById("canvas-wrap").clientWidth;
+const H = () => document.getElementById("canvas-wrap").clientHeight;
+
+const g = svg.append("g").attr("class", "graph-root");
+const linkG = g.append("g").attr("class", "links");
+const nodeG = g.append("g").attr("class", "nodes");
+const labelG = g.append("g").attr("class", "labels");
+
+// Zoom behavior
+const zoom = d3.zoom()
+  .scaleExtent([0.05, 8])
+  .on("zoom", e => {
+    g.attr("transform", e.transform);
+    currentTransform = e.transform;
+  });
+svg.call(zoom);
+
+// State
+let currentTransform = d3.zoomIdentity;
+let simulation;
+let nodeData, edgeData;
+let ctxTarget = null;
+
+function getTransform() { return currentTransform; }
+
+// ═══════════════════════════════════════════════════════════════
+//  SIMULATION
+// ═══════════════════════════════════════════════════════════════
+function initSim(nodes, edges) {
+  if (simulation) simulation.stop();
+
+  const linkDist = parseInt(document.getElementById("linkDist").value);
+  const repulse = parseInt(document.getElementById("repulse").value);
+  const gravity = parseFloat(document.getElementById("gravity").value);
+
+  simulation = d3.forceSimulation(nodes)
+    .force("link", d3.forceLink(edges).id(d => d.id).distance(linkDist))
+    .force("charge", d3.forceManyBody().strength(repulse))
+    .force("center", d3.forceCenter(W() / 2, H() / 2))
+    .force("collide", d3.forceCollide().radius(d => d.r + 3))
+    .force("gravity", d3.forceManyBody().strength(gravity))
+    .on("tick", () => render());
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════════
+function render() {
+  const showHubs = document.getElementById("showHubs").checked;
+  const showLabels = document.getElementById("showLabels").checked;
+  const edgeOpac = parseFloat(document.getElementById("edgeOpac").value);
+  const sizeBy = document.getElementById("sizeBy").value;
+  const minR = parseInt(document.getElementById("minR").value);
+  const maxR = parseInt(document.getElementById("maxR").value);
+  const hubBoost = parseFloat(document.getElementById("hubBoost").value);
+  const catCount = {};
+
+  // Compute category counts
+  const visibleNodes = nodeData.filter(n => n.visible);
+  visibleNodes.forEach(n => { catCount[n.category] = (catCount[n.category] || 0) + 1; });
+
+  // Node radius
+  const maxCount = Math.max(...Object.values(catCount), 1);
+  nodeData.forEach(n => {
+    let base;
+    switch (sizeBy) {
+      case "skillcount": base = minR + (maxR - minR) * (catCount[n.category] || 1) / maxCount; break;
+      case "tags":       base = minR + (maxR - minR) * Math.min(n.tags.length / 5, 1); break;
+      case "hub":        base = n.isHub ? minR * hubBoost : minR; break;
+      default:           base = (minR + maxR) / 2;
+    }
+    n.displayR = Math.max(minR, Math.min(maxR, base));
+    if (showHubs && n.isHub) n.displayR = n.displayR * hubBoost;
+  });
+
+  // ── LINKS ──
+  const linkSel = linkG.selectAll("line").data(edgeData, d => d.source.id + "|" + d.target.id);
+  linkSel.exit().remove();
+  linkSel.enter().append("line")
+    .attr("stroke-width", 1)
+    .attr("stroke-linecap", "round")
+    .merge(linkSel)
+    .attr("stroke", d => d.type === "cat" ? CAT_COLORS[d.source.category] || "#555" : d.type === "rel" ? "#f9c74f" : "#4dabf7")
+    .attr("stroke-opacity", d => d.type === "cat" ? edgeOpac * 0.5 : d.type === "rel" ? edgeOpac : edgeOpac * 0.3)
+    .attr("stroke-dasharray", d => d.type === "rel" ? "5,3" : d.type === "tag" ? "2,3" : null)
+    .attr("display", d => (d.source.visible && d.target.visible) ? null : "none");
+
+  // ── NODES ──
+  const nodeSel = nodeG.selectAll("g.node").data(nodeData, d => d.id);
+  nodeSel.exit().remove();
+
+  const nodeEnter = nodeSel.enter().append("g").attr("class", "node").style("cursor","pointer");
+  nodeEnter.append("circle").attr("class", "node-circle");
+  nodeEnter.append("circle").attr("class", "node-ring").attr("fill","none").attr("stroke-width", 2);
+
+  const nodeAll = nodeEnter.merge(nodeSel);
+
+  nodeAll.attr("display", d => d.visible ? null : "none")
+    .on("mouseenter", onNodeHover)
+    .on("mouseleave", onNodeLeave)
+    .on("contextmenu", onNodeCtx)
+    .call(d3.drag()
+      .on("start", onDragStart)
+      .on("drag", onDrag)
+      .on("end", onDragEnd));
+
+  nodeAll.select(".node-circle")
+    .attr("r", d => d.displayR)
+    .attr("fill", d => CAT_COLORS[d.category] || "#888")
+    .attr("stroke", d => d.locked ? "#fff" : "none")
+    .attr("stroke-width", d => d.locked ? 2 : 0);
+
+  nodeAll.select(".node-ring")
+    .attr("r", d => d.displayR + 4)
+    .attr("stroke", d => d.selected ? "#fff" : CAT_COLORS[d.category] || "#888")
+    .attr("stroke-opacity", d => d.selected ? 1 : 0.3);
+
+  // ── LABELS ──
+  if (showLabels) {
+    const labelSel = labelG.selectAll("text").data(nodeData.filter(d => d.visible), d => d.id);
+    labelSel.exit().remove();
+    labelSel.enter().append("text")
+      .attr("font-size", "9px")
+      .attr("fill", "#c0c0d0")
+      .attr("text-anchor", "middle")
+      .attr("dy", d => d.displayR + 12)
+      .style("pointer-events", "none")
+      .style("user-select", "none")
+      .merge(labelSel)
+      .attr("display", d => d.displayR >= 7 ? null : "none")
+      .text(d => d.name.length > 20 ? d.name.slice(0,18) + "…" : d.name);
+  } else {
+    labelG.selectAll("text").remove();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DRAG
+// ═══════════════════════════════════════════════════════════════
+function onDragStart(d) {
+  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x; d.fy = d.y;
+}
+function onDrag(d) {
+  d.fx = d3.event.x; d.fy = d3.event.y;
+}
+function onDragEnd(d) {
+  if (!d3.event.active) simulation.alphaTarget(0);
+  if (!d.locked) { d.fx = null; d.fy = null; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TOOLTIP & CONTEXT MENU
+// ═══════════════════════════════════════════════════════════════
+const tooltip = document.getElementById("tooltip");
+
+function onNodeHover(d) {
+  const ttName = document.getElementById("tt-name");
+  const ttDesc = document.getElementById("tt-desc");
+  const ttMeta = document.getElementById("tt-meta");
+
+  ttName.textContent = d.name;
+  ttDesc.textContent = d.description;
+
+  const catColor = CAT_COLORS[d.category] || "#888";
+  const catLabel = CAT_LABELS[d.category] || d.category;
+  ttMeta.innerHTML = `<span class="tt-cat" style="background:${catColor}">${catLabel}</span>
+    ${d.tags.slice(0, 6).map(t => `<span class="tt-tag">${t}</span>`).join("")}`;
+
+  const rect = document.getElementById("canvas-wrap").getBoundingClientRect();
+  let tx = d3.event.sourceEvent.clientX + 16;
+  let ty = d3.event.sourceEvent.clientY - 10;
+  if (tx + 250 > rect.right) tx = d3.event.sourceEvent.clientX - 250;
+  if (ty + 200 > rect.bottom) ty = d3.event.sourceEvent.clientY - 200;
+  tooltip.style.left = tx + "px";
+  tooltip.style.top = ty + "px";
+  tooltip.classList.add("visible");
+  d.selected = true;
+  render();
+}
+
+function onNodeLeave(d) {
+  tooltip.classList.remove("visible");
+  d.selected = false;
+  render();
+}
+
+function onNodeCtx(d) {
+  d3.event.preventDefault();
+  ctxTarget = d;
+  const menu = document.getElementById("ctx-menu");
+  menu.style.left = (d3.event.clientX - 5) + "px";
+  menu.style.top = (d3.event.clientY - 5) + "px";
+  menu.classList.add("visible");
+}
+
+document.addEventListener("click", e => {
+  if (!e.target.closest("#ctx-menu")) document.getElementById("ctx-menu").classList.remove("visible");
+});
+
+// Context menu actions
+document.getElementById("ctx-focus").onclick = () => {
+  if (!ctxTarget) return;
+  svg.transition().duration(600).call(zoom.transform, d3.zoomIdentity
+    .translate(W()/2, H()/2)
+    .scale(2)
+    .translate(-ctxTarget.x, -ctxTarget.y));
+};
+
+document.getElementById("ctx-hide").onclick = () => {
+  if (!ctxTarget) return;
+  ctxTarget.visible = false;
+  ctxTarget.fx = null; ctxTarget.fy = null;
+  reheat();
+};
+
+document.getElementById("ctx-showAll").onclick = () => {
+  nodeData.forEach(n => { n.visible = true; n.fx = null; n.fy = null; });
+  reheat();
+};
+
+document.getElementById("ctx-lock").onclick = () => {
+  if (!ctxTarget) return;
+  ctxTarget.locked = !ctxTarget.locked;
+  if (ctxTarget.locked) { ctxTarget.fx = ctxTarget.x; ctxTarget.fy = ctxTarget.y; }
+  else { ctxTarget.fx = null; ctxTarget.fy = null; }
+  render();
+};
+
+document.getElementById("ctx-copy").onclick = () => {
+  if (!ctxTarget) return;
+  navigator.clipboard.writeText(ctxTarget.name).catch(() => {});
+  document.getElementById("ctx-menu").classList.remove("visible");
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  CATEGORY HUB NODES
+// ═══════════════════════════════════════════════════════════════
+function addCategoryHubs() {
+  const cats = [...new Set(SKILLS.map(s => s.category))];
+  const catCount = {};
+  SKILLS.forEach(s => { catCount[s.category] = (catCount[s.category] || 0) + 1; });
+
+  cats.forEach(cat => {
+    nodeData.push({
+      id: "__hub__" + cat,
+      name: CAT_LABELS[cat] || cat,
+      category: cat,
+      tags: [],
+      description: `Hub for ${CAT_LABELS[cat] || cat} (${catCount[cat]} skills)`,
+      isHub: true,
+      visible: true,
+    });
+  });
+
+  // Hub → skill edges
+  cats.forEach(cat => {
+    nodeData.filter(n => n.category === cat && !n.isHub).forEach(s => {
+      edgeData.push({ source: "__hub__" + cat, target: s.name, type: "cat" });
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CONTROLS
+// ═══════════════════════════════════════════════════════════════
+function setupSlider(id, valId, callback) {
+  const el = document.getElementById(id);
+  const valEl = document.getElementById(valId);
+  el.addEventListener("input", () => {
+    valEl.textContent = el.value;
+    callback();
+  });
+}
+
+setupSlider("linkDist", "linkDistVal", () => {
+  if (simulation) simulation.force("link").distance(parseInt(document.getElementById("linkDist").value));
+  simulation?.alpha(0.3).restart();
+});
+setupSlider("repulse", "repulseVal", () => {
+  if (simulation) simulation.force("charge").strength(parseInt(document.getElementById("repulse").value));
+  simulation?.alpha(0.3).restart();
+});
+setupSlider("gravity", "gravityVal", () => {
+  if (simulation) simulation.force("gravity").strength(parseFloat(document.getElementById("gravity").value));
+  simulation?.alpha(0.3).restart();
+});
+setupSlider("minR", "minRVal", () => render());
+setupSlider("maxR", "maxRVal", () => render());
+setupSlider("hubBoost", "hubBoostVal", () => render());
+setupSlider("tagThresh", "tagThreshVal", rebuild);
+setupSlider("edgeOpac", "edgeOpacVal", () => render());
+
+["showLabels","showHubs"].forEach(id => {
+  document.getElementById(id).addEventListener("change", () => render());
+});
+
+["edgeCategory","edgeRelated","edgeTag"].forEach(id => {
+  document.getElementById(id).addEventListener("change", rebuild);
+});
+
+document.getElementById("sizeBy").addEventListener("change", () => render());
+
+// ── Category toggles ──
+const cats = [...new Set(SKILLS.map(s => s.category))].sort();
+const catToggleContainer = document.getElementById("catToggles");
+cats.forEach(cat => {
+  const color = CAT_COLORS[cat] || "#888";
+  const label = CAT_LABELS[cat] || cat;
+  const count = SKILLS.filter(s => s.category === cat).length;
+  const item = document.createElement("label");
+  item.className = "toggle-item";
+  item.innerHTML = `
+    <input type="checkbox" data-cat="${cat}" checked>
+    <div class="dot" style="background:${color}"></div>
+    <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${label}</span>
+    <span style="color:var(--muted);font-size:10px">${count}</span>
+  `;
+  item.querySelector("input").addEventListener("change", () => {
+    const visible = item.querySelector("input").checked;
+    nodeData.forEach(n => {
+      if (n.category === cat && !n.isHub) n.visible = visible;
+    });
+    reheat();
+  });
+  catToggleContainer.appendChild(item);
+});
+
+// ── Legend ──
+const legendEl = document.getElementById("legend");
+cats.forEach(cat => {
+  const color = CAT_COLORS[cat] || "#888";
+  const label = CAT_LABELS[cat] || cat;
+  const count = SKILLS.filter(s => s.category === cat).length;
+  const item = document.createElement("div");
+  item.className = "legend-item";
+  item.innerHTML = `<div class="swatch" style="background:${color}"></div>
+    <span class="lname">${label}</span><span class="lcount">${count}</span>`;
+  item.addEventListener("click", () => {
+    const allOn = nodeData.filter(n => !n.isHub && n.category === cat && n.visible).length === count;
+    nodeData.forEach(n => { if (n.category === cat && !n.isHub) n.visible = !allOn; });
+    document.querySelectorAll(`#catToggles input[data-cat="${cat}"]`).forEach(i => i.checked = !allOn);
+    reheat();
+  });
+  legendEl.appendChild(item);
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  ZOOM BUTTONS
+// ═══════════════════════════════════════════════════════════════
+document.getElementById("zoomIn").onclick = () => svg.transition().duration(300).call(zoom.scaleBy, 1.4);
+document.getElementById("zoomOut").onclick = () => svg.transition().duration(300).call(zoom.scaleBy, 0.7);
+document.getElementById("zoomReset").onclick = () => {
+  svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.translate(W()/2, H()/2).scale(0.8).translate(-W()/2, -H()/2));
+};
+
+// Click canvas to deselect
+svg.on("click", e => {
+  if (e.target === svg.node()) {
+    document.getElementById("ctx-menu").classList.remove("visible");
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+function rebuild() {
+  const showHubs = document.getElementById("showHubs").checked;
+  const data = buildGraph();
+  nodeData = data.nodes.map(n => ({ ...n, visible: true, selected: false, locked: false }));
+  edgeData = data.edges;
+
+  if (showHubs) addCategoryHubs();
+
+  // Stats
+  const cats2 = [...new Set(nodeData.filter(n => !n.isHub).map(n => n.category))];
+  document.getElementById("statNodes").textContent = nodeData.filter(n => !n.isHub).length;
+  document.getElementById("statEdges").textContent = edgeData.length;
+  document.getElementById("statCats").textContent = cats2.length;
+  document.getElementById("node-count-label").textContent = `${nodeData.filter(n => !n.isHub).length} skills · ${cats2.length} categories`;
+
+  initSim(nodeData, edgeData);
+}
+
+function reheat() {
+  // Rebuild edge visibility
+  edgeData.forEach(e => {
+    e.source = typeof e.source === "object" ? e.source.id : e.source;
+    e.target = typeof e.target === "object" ? e.target.id : e.target;
+  });
+  const srcMap = Object.fromEntries(nodeData.map(n => [n.id, n]));
+  edgeData.forEach(e => {
+    e.source = srcMap[e.source] || e.source;
+    e.target = srcMap[e.target] || e.target;
+  });
+  edgeData = edgeData.filter(e => e.source?.visible && e.target?.visible);
+
+  render();
+  simulation?.alpha(0.5).restart();
+}
+
+rebuild();
+</script>
+</body>
+</html>
