@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hermes Ecosystem — Interactive Guide</title>
+    <style>
+        :root {
+            --bg: #0d0d14;
+            --slide-bg: #13131f;
+            --slide-bg-2: #17172a;
+            --accent: #7c6af7;
+            --accent-2: #4ec9b0;
+            --accent-3: #ff6b6b;
+            --accent-4: #f9c74f;
+            --text: #e8e8f4;
+            --subtext: #9898b8;
+            --muted: #55556a;
+            --border: #252540;
+            --indicator: #2a2a45;
+            --indicator-active: #7c6af7;
+            --btn-bg: #1e1e30;
+            --btn-hover: #2a2a48;
+            --shadow: 0 12px 60px rgba(0,0,0,0.7);
+            --glow: 0 0 24px rgba(124,106,247,0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            color: var(--text);
+        }
+
+        /* ── MAIN CONTAINER ── */
+        .slideshow-container {
+            width: 92vw;
+            max-width: 1100px;
+            height: 78vh;
+            max-height: 720px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+        }
+
+        /* ── HEADER BAR ── */
+        .top-bar {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 4px;
+        }
+        .top-bar .brand {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+        .top-bar .section-label {
+            font-size: 0.7rem;
+            color: var(--muted);
+            letter-spacing: 0.05em;
+        }
+
+        /* ── SLIDE AREA ── */
+        .slide-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            background: var(--slide-bg);
+            border: 1px solid var(--border);
+        }
+
+        /* ── INDIVIDUAL SLIDES ── */
+        .slide {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 56px;
+            background: var(--slide-bg);
+            opacity: 0;
+            transform: translateX(60px);
+            transition: opacity 0.45s cubic-bezier(0.4,0,0.2,1),
+                        transform 0.45s cubic-bezier(0.4,0,0.2,1);
+            pointer-events: none;
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+            z-index: 2;
+        }
+
+        .slide.exit-left {
+            opacity: 0;
+            transform: translateX(-60px);
+        }
+
+        .slide.exit-right {
+            opacity: 0;
+            transform: translateX(60px);
+        }
+
+        /* ── TYPOGRAPHY ── */
+        .slide-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 10px;
+            outline: none;
+            border-bottom: 3px solid transparent;
+            padding: 6px 18px;
+            border-radius: 8px;
+            transition: border-color 0.2s, background 0.2s;
+            cursor: text;
+            line-height: 1.25;
+            letter-spacing: -0.02em;
+        }
+
+        .slide-title:focus {
+            border-bottom-color: var(--accent);
+            background: rgba(124,106,247,0.06);
+        }
+        .slide-title:hover { background: rgba(255,255,255,0.03); }
+
+        .slide-subtitle {
+            font-size: 1rem;
+            color: var(--subtext);
+            text-align: center;
+            margin-bottom: 6px;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+        }
+
+        /* ── BODY CONTENT ── */
+        .slide-body {
+            font-size: 1.05rem;
+            color: var(--subtext);
+            text-align: center;
+            max-width: 680px;
+            outline: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            transition: border-color 0.2s, background 0.2s;
+            cursor: text;
+            line-height: 1.75;
+            min-height: 36px;
+        }
+
+        .slide-body:focus {
+            border-color: rgba(124,106,247,0.45);
+            background: rgba(124,106,247,0.04);
+        }
+        .slide-body:hover { background: rgba(255,255,255,0.02); }
+
+        .slide-body.left-align { text-align: left; max-width: 760px; }
+
+        /* ── ACCENT DIVIDER ── */
+        .accent-bar {
+            width: 52px; height: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            border-radius: 2px;
+            margin: 8px auto 4px;
+        }
+
+        /* ── BADGE / CHIP ── */
+        .badge {
+            display: inline-block;
+            background: rgba(124,106,247,0.15);
+            border: 1px solid rgba(124,106,247,0.35);
+            color: var(--accent);
+            border-radius: 20px;
+            padding: 3px 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .badge.teal { background: rgba(78,201,176,0.12); border-color: rgba(78,201,176,0.3); color: var(--accent-2); }
+        .badge.red  { background: rgba(255,107,107,0.12); border-color: rgba(255,107,107,0.3); color: var(--accent-3); }
+        .badge.gold { background: rgba(249,199,79,0.12);  border-color: rgba(249,199,79,0.3);  color: var(--accent-4); }
+
+        /* ── GRID CONTENT ── */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            max-width: 780px;
+            text-align: left;
+            margin-top: 6px;
+        }
+
+        .grid-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .grid-card .card-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .grid-card .card-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .grid-card .card-desc {
+            font-size: 0.8rem;
+            color: var(--subtext);
+            line-height: 1.5;
+        }
+
+        /* ── BIG NUMBER / STAT ── */
+        .stat-row {
+            display: flex;
+            gap: 28px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .stat-item { text-align: center; }
+        .stat-num {
+            font-size: 2.6rem;
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label {
+            font-size: 0.72rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 4px;
+        }
+
+        /* ── IFRAME SLIDE ── */
+        .slide iframe.graph-embed {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 12px;
+            background: var(--bg);
+        }
+
+        /* ── FEATURE LIST ── */
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            width: 100%;
+            max-width: 720px;
+            margin-top: 4px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.88rem;
+            color: var(--text);
+            text-align: left;
+        }
+
+        .feature-item .feat-icon {
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .feature-item .feat-text { flex: 1; line-height: 1.5; }
+        .feature-item .feat-text strong { color: #fff; font-weight: 600; }
+
+        /* ── SLIDE NUMBER ── */
+        .slide-number {
+            position: absolute;
+            top: 16px; right: 24px;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.25);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── SECTION TAG ── */
+        .section-tag {
+            position: absolute;
+            top: 16px; left: 24px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 3px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        /* ── CONTROLS ── */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--btn-bg);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .btn:hover { background: var(--btn-hover); border-color: #5555aa; transform: scale(1.06); }
+        .btn:active { transform: scale(0.93); }
+        .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+        .btn.add  { background: #1a2e1a; border-color: #3a6a3a; font-size: 1.4rem; }
+        .btn.add:hover { background: #2a4a2a; }
+        .btn.del  { background: #2a1a1a; border-color: #6a3a3a; font-size: 1rem; }
+        .btn.del:hover { background: #4a2a2a; }
+        .btn.rst  { width: auto; border-radius: 20px; padding: 0 14px; font-size: 0.8rem; background: #222; border-color: #444; }
+        .btn.rst:hover { background: #333; }
+
+        .indicators { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; justify-content: center; }
+        .dot {
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            background: var(--indicator);
+            cursor: pointer;
+            transition: all 0.25s;
+            border: none;
+        }
+        .dot:hover { background: #888; transform: scale(1.35); }
+        .dot.active-dot {
+            background: var(--indicator-active);
+            width: 12px; height: 12px;
+            box-shadow: 0 0 10px rgba(124,106,247,0.55);
+        }
+
+        .hint {
+            color: rgba(255,255,255,0.28);
+            font-size: 0.75rem;
+            text-align: center;
+            letter-spacing: 0.3px;
+        }
+        .hint kbd {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: inherit;
+            font-size: 0.7rem;
+            margin: 0 1px;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 700px) {
+            .slideshow-container { width: 96vw; height: 65vh; }
+            .slide { padding: 28px 20px; }
+            .slide-title { font-size: 1.5rem; }
+            .slide-body { font-size: 0.9rem; }
+            .content-grid { grid-template-columns: 1fr; }
+            .stat-row { gap: 18px; }
+            .stat-num { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="slideshow-container" id="slideshowContainer">
+
+    <div class="top-bar">
+        <span class="brand">Hermes Ecosystem</span>
+        <span class="section-label" id="sectionLabel">Overview</span>
+    </div>
+
+    <div class="slide-wrapper" id="slideWrapper">
+        <!-- Slides injected by JS -->
+    </div>
+
+    <div class="accent-bar"></div>
+
+    <div class="controls">
+        <button class="btn" id="prevBtn" title="Previous" aria-label="Previous">◀</button>
+        <div class="indicators" id="indicators"></div>
+        <button class="btn" id="nextBtn" title="Next" aria-label="Next">▶</button>
+        <button class="btn add" id="addBtn" title="Add slide" aria-label="Add">+</button>
+        <button class="btn del" id="deleteBtn" title="Delete slide" aria-label="Delete">🗑</button>
+        <button class="btn rst" id="resetBtn" title="Reset">↺ Reset</button>
+    </div>
+
+    <div class="hint">
+        <kbd>Space</kbd> next &nbsp;|&nbsp; <kbd>Shift</kbd>+<kbd>Space</kbd> prev &nbsp;|&nbsp; <kbd>←</kbd><kbd>→</kbd> nav &nbsp;|&nbsp; click text to edit
+    </div>
+</div>
+
+<script>
+(function() {
+    // ─────────────────────────────────────────────────────
+    //  SLIDE DATA
+    // ─────────────────────────────────────────────────────
+    const defaultSlides = [
+        {
+            section: "Overview",
+            title: "The Hermes Ecosystem",
+            subtitle: "Your autonomous AI agent stack",
+            body: "Three interconnected systems — Agent, WebUI, and Skills — powered by 20+ LLM providers, running 24/7 as cron jobs, messaging bots, and a browser workspace.",
+            badge: "v2.x",
+        },
+        {
+            section: "Overview",
+            title: "147 Skills Across 25 Categories",
+            subtitle: "Growing with every session",
+            body: "",
+            stats: [
+                { n: "147", l: "Skills" },
+                { n: "25",  l: "Categories" },
+                { n: "20+", l: "LLM Providers" },
+                { n: "3",   l: "Interfaces" },
+            ],
+        },
+        {
+            section: "Overview",
+            title: "Three Ways to Talk to Hermes",
+            subtitle: "Pick the right interface for the job",
+            body: "",
+            grid: [
+                { title: "CLI / TUI", dot: "#7c6af7", desc: "Interactive terminal — rich Ink/React UI with slash commands, autocomplete, real-time streaming" },
+                { title: "WebUI", dot: "#4ec9b0", desc: "Browser workspace at :9119 — chat, files, terminal, skills browser, memory, cron jobs" },
+                { title: "Messaging Bots", dot: "#f9c74f", desc: "Telegram + Discord simultaneously — runs 24/7 as a bot, no browser needed" },
+            ],
+        },
+        {
+            section: "Agent Guide",
+            title: "How the Agent Loop Works",
+            subtitle: "The core engine — tool calls, memory, and iteration",
+            body: "Your message goes to an LLM with a list of available tools. The model can respond with text or request tool calls. Each tool execution feeds results back as a new message. The loop repeats until the model gives a plain text response.",
+            badge: "hermes-agent guide",
+        },
+        {
+            section: "Agent Guide",
+            title: "Sessions — Fork, Resume, Prune",
+            subtitle: "Full conversation history with branching",
+            body: "Every conversation is stored as an indexed session. Fork a session to try changes without losing the original. Resume by name or ID. Prune old sessions regularly — session files accumulate fast with frequent cron jobs.",
+            badge: "hermes-agent guide",
+        },
+        {
+            section: "Agent Guide",
+            title: "Persistent Memory",
+            subtitle: "Three-tier memory system",
+            body: "<strong>SOUL.md</strong> — agent personality and core principles (always loaded)<br><strong>MEMORY.md</strong> — curated long-term facts about you and your environment<br><strong>memory/YYYY-MM-DD.md</strong> — daily session logs, searchable across sessions",
+            badge: "hermes-agent guide",
+        },
+        {
+            section: "Agent Guide",
+            title: "Cron Jobs — The Autonomous Engine",
+            subtitle: "Multi-phase work that runs while you sleep",
+            body: "Schedule complex workflows as cron jobs. Chain phases with state files. Deliver to Discord, Telegram, or local files. The <code>autonomous-cron-pipeline</code> skill handles multi-phase projects — decomposes, executes, verifies, and repeats.",
+            badge: "hermes-agent guide",
+            badgeStyle: "teal",
+        },
+        {
+            section: "Agent Guide",
+            title: "Delegation — Multi-Agent Orchestration",
+            subtitle: "When one agent isn't enough",
+            body: "<strong>delegate_task</strong> — spawns parallel subagents within a session (quick parallel work)<br><strong>tmux spawning</strong> — long-lived autonomous missions that outlive the parent session<br><strong>Swarm mode</strong> — persistent tmux workers with role-based dispatch, kanban, and byte-verified review gates",
+            badge: "hermes-agent guide",
+        },
+        {
+            section: "Agent Guide",
+            title: "Key Gotchas",
+            subtitle: "Things that trip people up",
+            body: "",
+            features: [
+                { icon: "⚡", text: "<strong>Tool changes require /reset</strong> — editing config.yaml mid-session doesn't reload tools until you start a new session" },
+                { icon: "🔑", text: "<strong>Discord needs numeric user IDs</strong> — not usernames. Settings → Advanced → Developer Mode → right-click user → Copy User ID" },
+                { icon: "📁", text: "<strong>~/workspace not mounted in container</strong> — use /opt/data/hermes-sync/scripts/ for git-synced scripts, /opt/data/ for output" },
+                { icon: "🔁", text: "<strong>Iteration limit (max_turns)</strong> — default 90. Long debugging sessions hit it. Set agent.max_turns: 200 in config" },
+            ],
+        },
+        {
+            section: "Agent Guide",
+            title: "Configuration Reference",
+            subtitle: "Essential config.yaml paths and settings",
+            body: "<strong>Config:</strong> ~/.hermes/config.yaml<br><strong>API keys:</strong> ~/.hermes/.env<br><strong>Skills:</strong> ~/.hermes/skills/<br><strong>Sessions:</strong> ~/.hermes/sessions/<br><strong>Logs:</strong> ~/.hermes/logs/agent.log",
+            badge: "hermes-agent guide",
+        },
+        {
+            section: "WebUI Guide",
+            title: "Hermes WebUI — Your Command Center",
+            subtitle: "Browser-based workspace, installable as PWA",
+            body: "Chat, files, terminal, memory, skills, cron jobs, and dashboard — all in one responsive web app. Connects to Hermes Agent gateway at port 8642. Supports Tailscale for zero-config remote access.",
+            badge: "hermes-webui guide",
+            badgeStyle: "teal",
+        },
+        {
+            section: "WebUI Guide",
+            title: "Chat Interface",
+            subtitle: "Enhanced Claude mode vs Portable mode",
+            body: "<strong>Enhanced Claude</strong> — full session API via gateway. Persistent history, skill loading, all tools, streaming. <strong>Portable</strong> — OpenAI-compatible /v1/chat/completions. No sessions, no skills, no memory. Use for Ollama/LM Studio/local models.",
+            badge: "hermes-webui guide",
+            badgeStyle: "teal",
+        },
+        {
+            section: "WebUI Guide",
+            title: "Skills Browser — /skills",
+            subtitle: "Browse, install, and load from 2,000+ skills",
+            body: "Three tabs: Installed (your skills), Marketplace (all catalog skills), Featured (curated groups). Filter by category, risk level, search by name/description/tags. Security risk badges on every skill — review before installing high-risk skills.",
+            badge: "hermes-webui guide",
+            badgeStyle: "teal",
+        },
+        {
+            section: "WebUI Guide",
+            title: "Jobs, Memory & Dashboard",
+            subtitle: "Full management UIs",
+            body: "<strong>/jobs</strong> — create, monitor, pause, resume cron jobs. Output viewer per job.<br><strong>/memory</strong> — browse, search, edit MEMORY.md and daily logs directly.<br><strong>/dashboard</strong> — session count, model mix, cost ledger, attention card.",
+            badge: "hermes-webui guide",
+            badgeStyle: "teal",
+        },
+        {
+            section: "WebUI Guide",
+            title: "Swarm Mode — Multi-Agent Control Plane",
+            subtitle: "Live orchestration of multiple agents",
+            body: "Unlimited Hermes workers with 1 orchestrator. Role-based dispatch (builders, reviewers, QA, ops). Persistent tmux sessions. Kanban board with backlog → review → done lanes. Byte-verified review gate before handoff.",
+            badge: "hermes-webui guide",
+            badgeStyle: "teal",
+        },
+        {
+            section: "Skills Guide",
+            title: "What Skills Are",
+            subtitle: "Hermes's self-improvement system",
+            body: "Skills are Markdown procedure documents (.md files) that Hermes loads when relevant. Unlike one-shot prompts, skills encode reusable, tested workflows — the agent gets better at your specific environment with every session.",
+            badge: "hermes-skills guide",
+            badgeStyle: "gold",
+        },
+        {
+            section: "Skills Guide",
+            title: "How Skills Load",
+            subtitle: "Three ways to get a skill active",
+            body: "<strong>Auto-match</strong> — skill triggers (keywords in message) are scored against your input every turn. Matching skills load silently.<br><strong>/skill name</strong> — explicit load during chat, current session only.<br><strong>-s flag</strong> — preload at startup: hermes -s github-auth,coder",
+            badge: "hermes-skills guide",
+            badgeStyle: "gold",
+        },
+        {
+            section: "Skills Guide",
+            title: "Skill Categories",
+            subtitle: "Where each skill lives",
+            body: "agents · autonomous-ai-agents · autonomous-cron-pipeline · creative · data-science · devops · github · hermes · hermes-computer · mcp · media · mlops · note-taking · planning · productivity · red-teaming · repo-transmute · research · smart-home · social-media · software-development",
+            badge: "hermes-skills guide",
+            badgeStyle: "gold",
+        },
+        {
+            section: "Skills Guide",
+            title: "Core Skills to Know",
+            subtitle: "Start here",
+            body: "",
+            grid: [
+                { title: "hermes-agent", dot: "#7c6af7", desc: "The complete CLI/config reference. Load when anything isn't working." },
+                { title: "autonomous-cron-pipeline", dot: "#ff6b6b", desc: "Multi-phase projects via chained cron jobs with state files." },
+                { title: "github-pr-workflow", dot: "#6bcb77", desc: "Full PR lifecycle — branch, commit, open, CI check, merge." },
+                { title: "morning-briefing", dot: "#4ec9b0", desc: "Daily news + weather + calendar summary. Schedule Mon-Fri 8am." },
+                { title: "coder / reviewer", dot: "#f9c74f", desc: "Code generation and quality assurance — use together for full TDD." },
+                { title: "repo-transmute", dot: "#a29bfe", desc: "Vision-driven codebase migration — AST extraction + LLM + verification." },
+            ],
+        },
+        {
+            section: "Skills Guide",
+            title: "Authoring New Skills",
+            subtitle: "Teach Hermes your workflows",
+            body: "Write skills when: you solved a complex problem, discovered a non-obvious workflow, or want to capture a multi-step procedure. Format: YAML frontmatter (name, description, category, triggers) + markdown body (When to Use, Prerequisites, Numbered Steps, Verification, Pitfalls).",
+            badge: "hermes-skills guide",
+            badgeStyle: "gold",
+        },
+        {
+            section: "Skills Guide",
+            title: "Skill Limitations",
+            subtitle: "Things to watch for",
+            body: "• Cron threat scanning blocks skills containing 'authorized_keys' — rephrase or don't attach to cron<br>• Skills don't auto-reload mid-session — /reset after editing<br>• Large skills (>100MB loaded) prompt before auto-loading<br>• Related skills can conflict — last-loaded wins, check for overlaps in same category",
+            badge: "hermes-skills guide",
+            badgeStyle: "gold",
+        },
+        {
+            section: "Interactive",
+            title: "Skills Graph — Live Network Map",
+            subtitle: "147 skills · 25 categories · 3 edge types",
+            body: "Drag nodes · scroll to zoom · right-click for options · sidebar filters",
+            isEmbed: true,
+            embedSrc: "./skills-graph.html",
+        },
+        {
+            section: "Interactive",
+            title: "Keyboard Reference",
+            subtitle: "All shortcuts in one place",
+            body: "",
+            features: [
+                { icon: "␣", text: "<kbd>Space</kbd> — next slide" },
+                { icon: "⇧␣", text: "<kbd>Shift</kbd>+<kbd>Space</kbd> — previous slide" },
+                { icon: "←→", text: "<kbd>←</kbd> <kbd>→</kbd> — navigate (when not editing text)" },
+                { icon: "✎", text: "Click any text — edit inline, auto-saves to localStorage" },
+                { icon: "+", text: "<strong>+</strong> button — add a new blank slide" },
+                { icon: "🗑", text: "<strong>🗑</strong> button — delete current slide (min 1)" },
+                { icon: "↺", text: "<strong>↺ Reset</strong> — restore default slides" },
+                { icon: "📱", text: "Swipe left/right on touch devices" },
+            ],
+        },
+        {
+            section: "Overview",
+            title: "Start Here",
+            subtitle: "Quickest path to productivity",
+            body: "<strong>1.</strong> Read HERMES-AGENT-GUIDE.md — understand the agent loop, sessions, and memory<br><strong>2.</strong> Open Hermes WebUI at :9119 — explore chat, skills browser, memory<br><strong>3.</strong> Load /skill hermes-agent in your first session<br><strong>4.</strong> Schedule a morning briefing: cron job with skills=[morning-briefing], schedule='0 8 * * MON-FRI'<br><strong>5.</strong> Read HERMES-SKILLS-GUIDE.md to find skills for your recurring tasks",
+            badge: "docs/",
+        },
+    ];
+
+    let slides = [];
+    const STORAGE_KEY = 'hermes_guide_slides';
+    const SECTION_LABELS = {
+        "Overview": "Overview",
+        "Agent Guide": "hermes-agent",
+        "WebUI Guide": "hermes-webui",
+        "Skills Guide": "hermes-skills",
+        "Interactive": "interactive",
+    };
+
+    function loadSlides() {
+        try {
+            const s = localStorage.getItem(STORAGE_KEY);
+            if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) { slides = p; return; } }
+        } catch(e) {}
+        slides = JSON.parse(JSON.stringify(defaultSlides));
+    }
+    function saveSlides() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(slides)); } catch(e) {}
+    }
+    loadSlides();
+
+    let currentIndex = 0;
+    if (currentIndex >= slides.length) currentIndex = slides.length - 1;
+
+    const slideWrapper = document.getElementById('slideWrapper');
+    const indicatorsContainer = document.getElementById('indicators');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const addBtn = document.getElementById('addBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const sectionLabel = document.getElementById('sectionLabel');
+    let slideElements = [];
+
+    // ─────────────────────────────────────────────────────
+    //  RENDER
+    // ─────────────────────────────────────────────────────
+    function renderAllSlides() {
+        slideWrapper.innerHTML = '';
+        slideElements = [];
+
+        slides.forEach((data, i) => {
+            const el = document.createElement('div');
+            el.className = 'slide' + (i === currentIndex ? ' active' : '');
+            el.setAttribute('data-index', i);
+
+            // Section tag
+            if (data.section) {
+                const tag = document.createElement('span');
+                tag.className = 'section-tag';
+                tag.textContent = data.section;
+                el.appendChild(tag);
+            }
+
+            // Slide number
+            const num = document.createElement('span');
+            num.className = 'slide-number';
+            num.textContent = `${i + 1} / ${slides.length}`;
+            el.appendChild(num);
+
+            // Badge
+            if (data.badge) {
+                const badge = document.createElement('div');
+                badge.className = 'badge' + (data.badgeStyle ? ' ' + data.badgeStyle : '');
+                badge.textContent = data.badge;
+                el.appendChild(badge);
+            }
+
+            // Title
+            if (data.title) {
+                const t = document.createElement('div');
+                t.className = 'slide-title';
+                t.contentEditable = 'true';
+                t.setAttribute('role', 'textbox');
+                t.innerHTML = data.title;
+                t.addEventListener('input', () => updateData(i));
+                t.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); t.blur(); } });
+                el.appendChild(t);
+            }
+
+            // Subtitle
+            if (data.subtitle) {
+                const s = document.createElement('div');
+                s.className = 'slide-subtitle';
+                s.textContent = data.subtitle;
+                el.appendChild(s);
+            }
+
+            // Body (if not special)
+            if (data.body !== undefined && !data.isEmbed && !data.stats && !data.grid && !data.features) {
+                const b = document.createElement('div');
+                b.className = 'slide-body';
+                b.contentEditable = 'true';
+                b.setAttribute('role', 'textbox');
+                b.innerHTML = data.body;
+                b.addEventListener('input', () => updateData(i));
+                el.appendChild(b);
+            }
+
+            // Stats row
+            if (data.stats) {
+                const row = document.createElement('div');
+                row.className = 'stat-row';
+                data.stats.forEach(s => {
+                    const item = document.createElement('div');
+                    item.className = 'stat-item';
+                    item.innerHTML = `<div class="stat-num">${s.n}</div><div class="stat-label">${s.l}</div>`;
+                    row.appendChild(item);
+                });
+                el.appendChild(row);
+            }
+
+            // Grid
+            if (data.grid) {
+                const g = document.createElement('div');
+                g.className = 'content-grid';
+                data.grid.forEach(card => {
+                    const c = document.createElement('div');
+                    c.className = 'grid-card';
+                    c.innerHTML = `<div class="card-title"><div class="card-dot" style="background:${card.dot}"></div>${card.title}</div><div class="card-desc">${card.desc}</div>`;
+                    g.appendChild(c);
+                });
+                el.appendChild(g);
+            }
+
+            // Feature list
+            if (data.features) {
+                const fl = document.createElement('div');
+                fl.className = 'feature-list';
+                data.features.forEach(f => {
+                    const fi = document.createElement('div');
+                    fi.className = 'feature-item';
+                    fi.innerHTML = `<span class="feat-icon">${f.icon}</span><span class="feat-text">${f.text}</span>`;
+                    fl.appendChild(fi);
+                });
+                el.appendChild(fl);
+            }
+
+            // Iframe embed
+            if (data.isEmbed) {
+                const iframe = document.createElement('iframe');
+                iframe.className = 'graph-embed';
+                iframe.src = data.embedSrc || data.body;
+                iframe.title = 'Interactive graph';
+                iframe.allow = 'fullscreen';
+                el.appendChild(iframe);
+            }
+
+            slideWrapper.appendChild(el);
+            slideElements.push({ el, data, index: i });
+        });
+
+        updateIndicators();
+        updateButtons();
+        updateSectionLabel();
+    }
+
+    function updateData(i) {
+        const entry = slideElements.find(e => e.index === i);
+        if (!entry) return;
+        const t = entry.el.querySelector('.slide-title');
+        const b = entry.el.querySelector('.slide-body');
+        if (t) slides[i].title = t.innerHTML.trim() || 'Slide';
+        if (b) slides[i].body = b.innerHTML.trim();
+        saveSlides();
+    }
+
+    function updateAllData() {
+        slideElements.forEach(e => updateData(e.index));
+    }
+
+    // ─────────────────────────────────────────────────────
+    //  NAVIGATION
+    // ─────────────────────────────────────────────────────
+    function goToSlide(newIndex, direction = 'next') {
+        if (newIndex === currentIndex || newIndex < 0 || newIndex >= slides.length) return;
+        updateAllData();
+
+        slideElements.forEach(s => s.el.classList.remove('active', 'exit-left', 'exit-right'));
+        const oldEl = slideElements.find(s => s.index === currentIndex);
+        const newEl = slideElements.find(s => s.index === newIndex);
+        if (oldEl) oldEl.el.classList.add(direction === 'next' ? 'exit-left' : 'exit-right');
+        if (newEl) newEl.el.classList.add('active');
+
+        currentIndex = newIndex;
+        updateIndicators();
+        updateButtons();
+        updateSectionLabel();
+        saveSlides();
+    }
+
+    function nextSlide() { if (currentIndex < slides.length - 1) goToSlide(currentIndex + 1, 'next'); }
+    function prevSlide() { if (currentIndex > 0) goToSlide(currentIndex - 1, 'prev'); }
+
+    function updateIndicators() {
+        indicatorsContainer.innerHTML = '';
+        slides.forEach((_, i) => {
+            const dot = document.createElement('button');
+            dot.className = 'dot' + (i === currentIndex ? ' active-dot' : '');
+            dot.setAttribute('aria-label', `Slide ${i + 1}`);
+            dot.addEventListener('click', () => goToSlide(i, i > currentIndex ? 'next' : 'prev'));
+            indicatorsContainer.appendChild(dot);
+        });
+    }
+
+    function updateButtons() {
+        prevBtn.style.opacity = currentIndex === 0 ? '0.35' : '1';
+        prevBtn.style.pointerEvents = currentIndex === 0 ? 'none' : 'auto';
+        nextBtn.style.opacity = currentIndex >= slides.length - 1 ? '0.35' : '1';
+        nextBtn.style.pointerEvents = currentIndex >= slides.length - 1 ? 'none' : 'auto';
+        deleteBtn.style.opacity = slides.length <= 1 ? '0.35' : '1';
+        deleteBtn.style.pointerEvents = slides.length <= 1 ? 'none' : 'auto';
+        slideElements.forEach(entry => {
+            const badge = entry.el.querySelector('.slide-number');
+            if (badge) badge.textContent = `${entry.index + 1} / ${slides.length}`;
+        });
+    }
+
+    function updateSectionLabel() {
+        const data = slides[currentIndex];
+        sectionLabel.textContent = data ? (SECTION_LABELS[data.section] || data.section || '') : '';
+    }
+
+    // ─────────────────────────────────────────────────────
+    //  ADD / DELETE
+    // ─────────────────────────────────────────────────────
+    function addSlide() {
+        updateAllData();
+        const newSlide = { section: "Overview", title: 'New Slide', body: 'Click to edit content.' };
+        slides.splice(currentIndex + 1, 0, newSlide);
+        saveSlides();
+        renderAllSlides();
+        currentIndex = Math.min(currentIndex + 1, slides.length - 1);
+        document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+        document.querySelector(`[data-index="${currentIndex}"]`).classList.add('active');
+        updateIndicators();
+        updateButtons();
+    }
+
+    function deleteSlide() {
+        if (slides.length <= 1) return;
+        updateAllData();
+        slides.splice(currentIndex, 1);
+        if (currentIndex >= slides.length) currentIndex = slides.length - 1;
+        saveSlides();
+        renderAllSlides();
+        document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+        document.querySelector(`[data-index="${currentIndex}"]`).classList.add('active');
+        updateIndicators();
+        updateButtons();
+    }
+
+    function resetSlides() {
+        if (!confirm('Reset all slides to defaults? Custom edits will be lost.')) return;
+        slides = JSON.parse(JSON.stringify(defaultSlides));
+        currentIndex = 0;
+        saveSlides();
+        renderAllSlides();
+    }
+
+    // ─────────────────────────────────────────────────────
+    //  KEYBOARD
+    // ─────────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+        const active = document.activeElement;
+        const isEditing = active && (active.contentEditable === 'true' || active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+        if (e.code === 'Space' && !isEditing) {
+            e.preventDefault();
+            e.shiftKey ? prevSlide() : nextSlide();
+            return;
+        }
+        if ((e.code === 'ArrowRight') && !isEditing && !e.ctrlKey && !e.metaKey) { e.preventDefault(); nextSlide(); }
+        if ((e.code === 'ArrowLeft') && !isEditing && !e.ctrlKey && !e.metaKey) { e.preventDefault(); prevSlide(); }
+    });
+
+    // ─────────────────────────────────────────────────────
+    //  BUTTON EVENTS
+    // ─────────────────────────────────────────────────────
+    prevBtn.addEventListener('click', prevSlide);
+    nextBtn.addEventListener('click', nextSlide);
+    addBtn.addEventListener('click', addSlide);
+    deleteBtn.addEventListener('click', deleteSlide);
+    resetBtn.addEventListener('click', resetSlides);
+
+    // ─────────────────────────────────────────────────────
+    //  TOUCH SWIPE
+    // ─────────────────────────────────────────────────────
+    let tx = 0, ty = 0;
+    slideWrapper.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+    slideWrapper.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - tx;
+        const dy = e.changedTouches[0].clientY - ty;
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+            dx < -30 ? nextSlide() : prevSlide();
+        }
+    });
+
+    // ─────────────────────────────────────────────────────
+    //  INIT
+    // ─────────────────────────────────────────────────────
+    renderAllSlides();
+    console.log('✅ Hermes Guide Slideshow ready');
+})();
+</script>
+</body>
+</html>
