@@ -543,6 +543,20 @@
         <option value="skillcount">Skill count per category</option>
         <option value="tags">Tag breadth (more tags = larger)</option>
         <option value="hub">Category hub (larger hubs)</option>
+        <option value="complexity">Complexity</option>
+        <option value="steps">Steps</option>
+        <option value="quality">Quality</option>
+      </select>
+    </div>
+
+    <!-- Color by -->
+    <div class="ctrl-section">
+      <div class="ctrl-title">Color by</div>
+      <select class="ctrl-select" id="colorBy">
+        <option value="category">Category</option>
+        <option value="complexity">Complexity</option>
+        <option value="steps">Steps</option>
+        <option value="quality">Quality</option>
       </select>
     </div>
 
@@ -7953,7 +7967,27 @@ function render() {
       case "skillcount": base = minR + (maxR - minR) * (catCount[n.category] || 1) / maxCount; break;
       case "tags":       base = minR + (maxR - minR) * Math.min(n.tags.length / 5, 1); break;
       case "hub":        base = n.isHub ? minR * hubBoost : minR; break;
+      case "complexity": base = minR + (maxR - minR) * Math.min((n.complexity || 1) / 5, 1); break;
+      case "steps":      base = minR + (maxR - minR) * Math.min((n.steps || 1) / 10, 1); break;
+      case "quality":    base = minR + (maxR - minR) * Math.min(computeQualityScore(n) / 4, 1); break;
       default:           base = (minR + maxR) / 2;
+    }
+
+    function complexityColor(val) {
+      return val === "high" ? "#ff6b6b" : val === "medium" ? "#f9c74f" : "#4ec9b0";
+    }
+    function stepsColor(val) {
+      const t = Math.min((val || 0) / 73, 1);
+      return `hsl(${180 - t * 160}, 65%, 55%)`;
+    }
+    function computeQualityScore(n) {
+      return (n.has_pitfalls_defined ? 1 : 0)
+           + (n.has_examples ? 1 : 0)
+           + (n.has_testing_guidance ? 1 : 0)
+           + (n.verified ? 1 : 0);
+    }
+    function qualityColor(val) {
+      return val >= 3 ? "#4ec9b0" : val === 2 ? "#87eb8c" : val === 1 ? "#f9c74f" : "#e17055";
     }
     n.displayR = Math.max(minR, Math.min(maxR, base));
     if (showHubs && n.isHub) n.displayR = n.displayR * hubBoost;
@@ -7995,18 +8029,31 @@ function render() {
 
   nodeAll.attr("transform", d => `translate(${d.x},${d.y})`);
 
+  const colorBy = document.getElementById("colorBy").value;
+
   nodeAll.select(".node-circle")
     .attr("cx", 0).attr("cy", 0)
     .attr("r", d => d.displayR)
-    .attr("fill", d => CAT_COLORS[d.category] || "#888")
+    .attr("fill", d => {
+      if (colorBy === "category") return CAT_COLORS[d.category] || "#888";
+      if (colorBy === "complexity") return complexityColor(d.complexity);
+      if (colorBy === "steps") return stepsColor(d.step_count || 0);
+      if (colorBy === "quality") return qualityColor(computeQualityScore(d));
+      return CAT_COLORS[d.category] || "#888";
+    })
     .attr("stroke", d => d.locked ? "#fff" : "none")
     .attr("stroke-width", d => d.locked ? 2 : 0);
 
   nodeAll.select(".node-ring")
     .attr("cx", 0).attr("cy", 0)
     .attr("r", d => d.displayR + 4)
-    .attr("stroke", d => d._cardOpen ? "#fff" : d.selected ? "#fff" : CAT_COLORS[d.category] || "#888")
-    .attr("stroke-opacity", d => d._cardOpen ? 1 : d.selected ? 1 : 0.3)
+    .attr("stroke", d => {
+      if (colorBy === "complexity") return complexityColor(d.complexity);
+      if (colorBy === "steps") return stepsColor(d.step_count || 0);
+      if (colorBy === "quality") return qualityColor(computeQualityScore(d));
+      return d._cardOpen ? "#fff" : d.selected ? "#fff" : CAT_COLORS[d.category] || "#888";
+    })
+    .attr("stroke-opacity", d => colorBy !== "category" ? 0.6 : d._cardOpen ? 1 : d.selected ? 1 : 0.3)
     .attr("stroke-width", d => d._cardOpen ? 3 : 2);
 
   // ── LABELS ──
@@ -8321,6 +8368,7 @@ setupSlider("edgeOpac", "edgeOpacVal", () => render());
 });
 
 document.getElementById("sizeBy").addEventListener("change", () => render());
+document.getElementById("colorBy").addEventListener("change", () => render());
 
 // ── Category toggles ──
 const cats = [...new Set(SKILLS.map(s => s.category))].sort();
