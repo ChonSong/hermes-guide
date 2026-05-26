@@ -5498,17 +5498,33 @@ function reheat() {
   simulation?.alpha(0.5).restart();
 }
 
-rebuild();
-try {
-  console.log('SKILLS length:', SKILLS.length);
-  console.log('first skill:', JSON.stringify(SKILLS[0]));
-  console.log('first cat:', SKILLS[0].category);
-  const data = buildGraph();
-  console.log('nodes from buildGraph:', data.nodes.length);
-  console.log('edges from buildGraph:', data.edges.length);
-} catch(e) {
-  console.error('init error:', e.message, e.stack);
+function waitForD3(cb) {
+  if (typeof d3 !== 'undefined') { cb(); return; }
+  setTimeout(() => waitForD3(cb), 50);
 }
+
+waitForD3(() => {
+  try {
+    rebuild();
+    console.log('init complete');
+    const nd = nodeData ? nodeData.length : 0;
+    const ed = edgeData ? edgeData.length : 0;
+    console.log('nodeData:', nd, 'edgeData:', ed);
+  } catch(e) {
+    console.error('rebuild error:', e.message, e.stack);
+    // fallback: try directly
+    try {
+      const data = buildGraph();
+      nodeData = data.nodes.map(n => ({ ...n, visible: true, selected: false, locked: false }));
+      edgeData = data.edges;
+      console.log('fallback nodes:', nodeData.length);
+      initSim(nodeData, edgeData);
+      render();
+    } catch(e2) {
+      console.error('fallback error:', e2.message, e2.stack);
+    }
+  }
+});
 </script>
 </body>
 </html>
