@@ -339,6 +339,109 @@
   }
   #info-panel .inf { display: flex; flex-direction: column; gap: 2px; }
   #info-panel .inf .val { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  /* ── SKILL CARD ── */
+  #skill-card {
+    position: fixed;
+    top: 60px;
+    right: 16px;
+    width: 280px;
+    background: #1a1a24;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    z-index: 50;
+    display: none;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+    flex-direction: column;
+    gap: 10px;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+  #skill-card.visible { display: flex; }
+  #skill-card .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  #skill-card .card-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    word-break: break-all;
+    line-height: 1.3;
+  }
+  #skill-card .card-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  #skill-card .card-close:hover { color: var(--text); }
+  #skill-card .card-cat {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #000;
+  }
+  #skill-card .card-desc {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  #skill-card .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  #skill-card .card-tag {
+    background: rgba(124,106,247,0.15);
+    color: var(--accent);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 10px;
+  }
+  #skill-card .card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+  }
+  #skill-card .card-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: opacity 0.15s;
+    text-decoration: none;
+  }
+  #skill-card .card-btn:hover { opacity: 0.85; }
+  #skill-card .card-btn.secondary {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+  #skill-card .card-btn.secondary:hover { background: rgba(124,106,247,0.1); }
+  #skill-card .card-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  #skill-card .card-stats span { color: var(--text); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -459,6 +562,7 @@
       <button class="zoom-btn" id="zoomOut" title="Zoom out">−</button>
       <button class="zoom-btn" id="zoomReset" title="Reset view" style="font-size:11px;">⊙</button>
     </div>
+    <button id="btn-reset-filter" class="ctrl-btn" style="display:none;background:var(--accent);color:#fff;border-radius:6px;font-size:11px;padding:4px 10px" title="Clear connected-only filter">Clear filter</button>
     <div id="info-panel">
       <div class="inf"><div class="val" id="statNodes">—</div>nodes</div>
       <div class="inf"><div class="val" id="statEdges">—</div>edges</div>
@@ -484,6 +588,23 @@
   <div class="ctx-item" id="ctx-lock">Lock/unlock position L</div>
   <div class="ctx-sep"></div>
   <div class="ctx-item" id="ctx-copy">Copy skill name</div>
+</div>
+
+<!-- Skill card -->
+<div id="skill-card">
+  <div class="card-header">
+    <div class="card-name" id="card-name"></div>
+    <button class="card-close" id="card-close">×</button>
+  </div>
+  <div id="card-cat-row"></div>
+  <div class="card-desc" id="card-desc"></div>
+  <div class="card-tags" id="card-tags"></div>
+  <div class="card-stats" id="card-stats"></div>
+  <div class="card-actions">
+    <a class="card-btn" id="card-github" href="#" target="_blank">View on GitHub</a>
+    <button class="card-btn secondary" id="card-connected">Show connected only</button>
+    <button class="card-btn secondary" id="card-hide-node" style="display:none">Hide this node</button>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
@@ -7865,6 +7986,7 @@ function render() {
   nodeAll.attr("display", d => d.visible ? null : "none")
     .on("mouseenter", onNodeHover)
     .on("mouseleave", onNodeLeave)
+    .on("click", onNodeClick)
     .on("contextmenu", onNodeCtx)
     .call(d3.drag()
       .on("start", onDragStart)
@@ -7883,8 +8005,9 @@ function render() {
   nodeAll.select(".node-ring")
     .attr("cx", 0).attr("cy", 0)
     .attr("r", d => d.displayR + 4)
-    .attr("stroke", d => d.selected ? "#fff" : CAT_COLORS[d.category] || "#888")
-    .attr("stroke-opacity", d => d.selected ? 1 : 0.3);
+    .attr("stroke", d => d._cardOpen ? "#fff" : d.selected ? "#fff" : CAT_COLORS[d.category] || "#888")
+    .attr("stroke-opacity", d => d._cardOpen ? 1 : d.selected ? 1 : 0.3)
+    .attr("stroke-width", d => d._cardOpen ? 3 : 2);
 
   // ── LABELS ──
   if (showLabels) {
@@ -7957,6 +8080,16 @@ function onNodeLeave(d) {
   render();
 }
 
+function onNodeClick(d) {
+  d3.event.stopPropagation();
+  // Remove previous card selection
+  if (cardNode && cardNode !== d) {
+    cardNode._cardOpen = false;
+  }
+  d._cardOpen = true;
+  showCard(d);
+}
+
 function onNodeCtx(d) {
   d3.event.preventDefault();
   ctxTarget = d;
@@ -7969,6 +8102,114 @@ function onNodeCtx(d) {
 document.addEventListener("click", e => {
   if (!e.target.closest("#ctx-menu")) document.getElementById("ctx-menu").classList.remove("visible");
 });
+
+// ═══════════════════════════════════════════════════════════════
+//  SKILL CARD
+// ═══════════════════════════════════════════════════════════════
+let cardNode = null;
+const skillCard = document.getElementById("skill-card");
+
+function showCard(d) {
+  cardNode = d;
+  const catColor = CAT_COLORS[d.category] || "#888";
+  const catLabel = CAT_LABELS ? (CAT_LABELS[d.category] || d.category) : d.category;
+
+  document.getElementById("card-name").textContent = d.name;
+  document.getElementById("card-desc").textContent = d.description;
+
+  const catRow = document.getElementById("card-cat-row");
+  catRow.innerHTML = `<span class="card-cat" style="background:${catColor}">${catLabel}</span>`;
+
+  const tagsEl = document.getElementById("card-tags");
+  if (d.tags && d.tags.length > 0) {
+    tagsEl.innerHTML = d.tags.slice(0, 8).map(t => `<span class="card-tag">${t}</span>`).join("");
+    tagsEl.style.display = "flex";
+  } else {
+    tagsEl.style.display = "none";
+  }
+
+  // Stats: connected edges count
+  const connEdges = edgeData.filter(e =>
+    (typeof e.source === "object" ? e.source.id : e.source) === d.id ||
+    (typeof e.target === "object" ? e.target.id : e.target) === d.id
+  );
+  const catCount = SKILLS.filter(s => s.category === d.category).length;
+  document.getElementById("card-stats").innerHTML =
+    `Category: <span>${catCount} skills</span> · <span>${connEdges.length}</span> connections`;
+
+  // GitHub button — skill lives in ~/.hermes/skills/{name}/SKILL.md
+  // Skills come from ChonSong/hermes-agent (local skills) or awesome-agent-skills (remote)
+  // Best effort: link to ChonSong/hermes-agent/skills/{name}/SKILL.md
+  const githubUrl = `https://github.com/ChonSong/hermes-agent/blob/main/skills/${d.name}/SKILL.md`;
+  const ghBtn = document.getElementById("card-github");
+  ghBtn.href = githubUrl;
+  ghBtn.textContent = "View source (hermes-agent)";
+  // Also try awesome-agent-skills as fallback via URL inspection
+  ghBtn.onclick = (e) => {
+    // We can't check remote files client-side, so we just link to hermes-agent
+    // The user can navigate to awesome-agent-skills manually if needed
+  };
+
+  // "Hide this node" — only show when no connected filter active
+  document.getElementById("card-hide-node").style.display = (d._dimmed ? "block" : "none");
+
+  skillCard.classList.add("visible");
+}
+
+function hideCard() {
+  skillCard.classList.remove("visible");
+  cardNode = null;
+}
+
+document.getElementById("card-close").onclick = hideCard;
+
+// Click on card bg nothing → close on outside click
+document.addEventListener("click", e => {
+  if (!e.target.closest("#skill-card") && !e.target.closest(".node") && !e.target.closest(".node-circle")) {
+    hideCard();
+  }
+});
+
+// Escape to close card
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") hideCard();
+});
+
+document.getElementById("card-hide-node").onclick = () => {
+  if (!cardNode) return;
+  cardNode.visible = false;
+  hideCard();
+  reheat();
+};
+
+// "Show connected only" — dims all nodes not connected to the selected one
+document.getElementById("card-connected").onclick = () => {
+  if (!cardNode) return;
+  const id = cardNode.id;
+
+  // Collect all connected node ids
+  const conn = new Set([id]);
+  edgeData.forEach(e => {
+    const sid = typeof e.source === "object" ? e.source.id : e.source;
+    const tid = typeof e.target === "object" ? e.target.id : e.target;
+    if (sid === id) conn.add(tid);
+    if (tid === id) conn.add(sid);
+  });
+
+  nodeData.forEach(n => {
+    if (conn.has(n.id)) {
+      n.visible = true;
+      n._dimmed = false;
+    } else {
+      n.visible = false;
+      n._dimmed = true;
+    }
+  });
+
+  document.getElementById("btn-reset-filter").style.display = "inline-block";
+  hideCard();
+  reheat();
+};
 
 // Context menu actions
 document.getElementById("ctx-focus").onclick = () => {
@@ -7987,7 +8228,15 @@ document.getElementById("ctx-hide").onclick = () => {
 };
 
 document.getElementById("ctx-showAll").onclick = () => {
-  nodeData.forEach(n => { n.visible = true; n.fx = null; n.fy = null; });
+  nodeData.forEach(n => { n.visible = true; n.fx = null; n.fy = null; n._dimmed = false; });
+  hideCard();
+  reheat();
+};
+
+document.getElementById("btn-reset-filter").onclick = () => {
+  nodeData.forEach(n => { n.visible = true; n.fx = null; n.fy = null; n._dimmed = false; });
+  document.getElementById("btn-reset-filter").style.display = "none";
+  hideCard();
   reheat();
 };
 
