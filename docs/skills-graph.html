@@ -484,6 +484,7 @@
   <div class="ctx-item" id="ctx-lock">Lock/unlock position L</div>
   <div class="ctx-sep"></div>
   <div class="ctx-item" id="ctx-copy">Copy skill name</div>
+  <div class="ctx-item" id="ctx-gh">View GitHub source</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
@@ -491,6 +492,411 @@
 // ═══════════════════════════════════════════════════════════════
 //  DATA — all skills from the Hermes registry
 // ═══════════════════════════════════════════════════════════════
+// ── Category map: skill-name → category ──
+const CATEGORY_MAP = {
+  "codi": "agents",
+  "zoul": "agents",
+  "zoul-delegation": "agents",
+  "zoul-soul": "agents",
+  "planner": "agents",
+  "reviewer": "agents",
+  "coder": "agents",
+  "journalist": "agents",
+  "browseragent": "agents",
+  "reactagent": "agents",
+  "researchagent": "agents",
+  "mediamaker": "agents",
+  "nginxmanagerbot": "agents",
+  "coach": "agents",
+  "main": "agents",
+  "heartbeat": "agents",
+  "journal": "agents",
+  "knowledge-manager": "agents",
+  "automator": "agents",
+  "cobudget": "agents",
+  "ubddocxgenerator": "agents",
+  "curriculumdesign": "agents",
+  "cobra": "agents",
+  "codi": "agents",
+
+  "autonomous-ai-agents-claude-code": "autonomous-ai-agents",
+  "autonomous-ai-agents-codex": "autonomous-ai-agents",
+  "autonomous-ai-agents-hermes-agent": "autonomous-ai-agents",
+  "autonomous-ai-agents-kanban-codex-lane": "autonomous-ai-agents",
+  "autonomous-ai-agents-multi-provider-llm-backoff": "autonomous-ai-agents",
+  "autonomous-ai-agents-opencode": "autonomous-ai-agents",
+  "autonomous-ai-agents-roadmap-engine": "autonomous-ai-agents",
+  "autonomous-ai-agents-self-improvement-engine": "autonomous-ai-agents",
+
+  "autonomous-cron-pipeline": "autonomous-cron-pipeline",
+  "roadmap-engine": "autonomous-cron-pipeline",
+  "self-improvement-engine": "autonomous-cron-pipeline",
+
+  "excalidraw": "creative",
+  "asciart": "creative",
+  "asciivideo": "creative",
+  "pixelart": "creative",
+  "p5js": "creative",
+  "baoyu-article-illustrator": "creative",
+  "baoyu-comic": "creative",
+  "baoyu-infographic": "creative",
+  "claude-design": "creative",
+  "comfyui": "creative",
+  "design-md": "creative",
+  "humanizer": "creative",
+  "ideation": "creative",
+  "manim-video": "creative",
+  "popular-web-designs": "creative",
+  "pretext": "creative",
+  "sketch": "creative",
+  "songwriting-and-ai-music": "creative",
+  "touchdesigner-mcp": "creative",
+
+  "jupyter-live-kernel": "data-science",
+
+  "agent-os": "devops",
+  "deployment-patterns": "devops",
+  "docker-patterns": "devops",
+  "git-workflow": "devops",
+  "go": "devops",
+  "infrastructure-as-code": "devops",
+  "context-budget": "devops",
+  "canary-watch": "devops",
+  "multi-provider-api-calls": "devops",
+  "webhook-subscriptions": "devops",
+
+  "github-auth": "github",
+  "github-code-review": "github",
+  "github-issues": "github",
+  "github-pr-workflow": "github",
+  "github-repo-management": "github",
+  "repo-discovery": "github",
+  "codebase-inspection": "github",
+
+  "hermes-agent": "hermes",
+  "hermes-agent-docs": "hermes",
+  "hermes-docker-workflow": "hermes",
+  "hermes-agent-acp-skill": "hermes",
+  "hermes-agent-docker": "hermes",
+  "hermes-agent-self-evolution": "hermes",
+  "hermes-agent-skill-authoring": "hermes",
+  "hermes-agent-template": "hermes",
+  "hermes-agent-camel": "hermes",
+  "hermes-alpha": "hermes",
+  "hermes-android": "hermes",
+  "hermes-autonomous-server": "hermes",
+  "hermes-blockchain-oracle": "hermes",
+  "hermes-cloudflare": "hermes",
+  "hermes-computer": "hermes-computer",
+  "hermes-council": "hermes",
+  "hermes-curator-evolver": "hermes",
+  "hermes-desktop": "hermes",
+  "hermes-docker-sync-setup": "hermes",
+  "hermes-dojo": "hermes",
+  "hermes-embodied": "hermes",
+  "hermes-genesis": "hermes",
+  "hermes-incident-commander": "hermes",
+  "hermes-legal": "hermes",
+  "hermes-life-os": "hermes",
+  "hermes-miniverse": "hermes",
+  "hermes-neurovision": "hermes",
+  "hermes-nextcloud": "hermes",
+  "hermes-paperclip-adapter": "hermes",
+  "hermes-payguard": "hermes",
+  "hermes-plugin-chrome-profiles": "hermes",
+  "hermes-plugins": "hermes",
+  "hermes-research-agent": "hermes",
+  "hermes-skill-distillation": "hermes",
+  "hermes-skill-factory": "hermes",
+  "hermes-skill-marketplace": "hermes",
+  "hermes-spotify-skill": "hermes",
+  "hermes-startup-architect": "hermes",
+  "hermes-ui": "hermes",
+  "hermes-weather-plugin": "hermes",
+  "hermes-web-search-plus": "hermes",
+  "hermes-web-ui": "hermes",
+  "hermes-webui": "hermes",
+  "hermes-workspace": "hermes",
+  "hermes-wsl-ubuntu": "hermes",
+  "hermes-wxtrain-plugin": "hermes",
+  "hermescraf": "hermes",
+  "hermeshub": "hermes",
+  "hermes-ai-infrastructure-monitoring-toolkit": "hermes",
+
+  "native-mcp": "mcp",
+
+  "spotify": "media",
+  "youtube-content": "media",
+  "gif-search": "media",
+  "songsee": "media",
+  "heartmula": "media",
+
+  "llama-cpp": "mlops/inference",
+  "vllm": "mlops/inference",
+  "ollama": "mlops/inference",
+  "outlines": "mlops/inference",
+  "obliteratus": "mlops/inference",
+
+  "huggingface-hub": "mlops",
+  "huggingface-datasets": "mlops",
+  "huggingface-models": "mlops",
+  "huggingface-transformers": "mlops",
+  "huggingface-trainers": "mlops",
+  "huggingfaceEvaluate": "mlops/evaluation",
+  "weights-and-biases": "mlops/evaluation",
+  "lm-evaluation-harness": "mlops/evaluation",
+  "axolotl": "mlops/training",
+  "unsloth": "mlops/training",
+  "trl": "mlops/training",
+  "deepseek": "mlops/training",
+  "fireworks": "mlops/training",
+  "dspyt": "mlops/research",
+  "segment-anything-model": "mlops/models",
+  "audiocraft-audio-generation": "mlops/models",
+  "qwen-vl": "mlops/models",
+  "llava": "mlops/models",
+  "whisper": "mlops/models",
+  "stable-diffusion": "mlops/models",
+
+  "obsidian": "note-taking",
+  "apple-notes": "note-taking",
+  "apple-reminders": "note-taking",
+  "notion": "note-taking",
+  "notion-api": "note-taking",
+  "google-keep": "note-taking",
+  "affine-logger": "note-taking",
+
+  "blueprint": "planning",
+  "nanobot-integration-plan": "planning",
+  "product-lens": "planning",
+
+  "smart-home-openhue": "smart-home",
+
+  "xurl": "social-media",
+  "social-media-xurl": "social-media",
+  "gitroomhq-postiz-agent": "social-media",
+  "typefully-typefully": "social-media",
+  "x-twitter-scraper": "social-media",
+  "wshuyi-x-article-publisher-skill": "social-media",
+
+  "addyosmani/accessibility": "software-development",
+  "addyosmani/best-practices": "software-development",
+  "addyosmani/core-web-vitals": "software-development",
+  "addyosmani/performance": "software-development",
+  "addyosmani/seo": "software-development",
+  "addyosmani/web-quality-audit": "software-development",
+  "architecture-decision-records": "software-development",
+  "autonomous-development": "software-development",
+  "benchmark": "software-development",
+  "coding-standards": "software-development",
+  "debug-mantra": "software-development",
+  "debugging-hermes-tui-commands": "software-development",
+  "e2e-testing": "software-development",
+  "node-inspect-debugger": "software-development",
+  "plan": "software-development",
+  "post-mortem": "software-development",
+  "python-debugpy": "software-development",
+  "requesting-code-review": "software-development",
+  "scrutinize": "software-development",
+  "search-first": "software-development",
+  "security-review": "software-development",
+  "spike": "software-development",
+  "structured-code-review": "software-development",
+  "subagent-driven-development": "software-development",
+  "svelte-development": "software-development",
+  "systematic-debugging": "software-development",
+  "test-driven-development": "software-development",
+  "vite-patterns": "software-development",
+  "writing-plans": "software-development",
+  "browserbase-browser": "software-development",
+  "browserbase-ui-test": "software-development",
+  "openai-playwright": "software-development",
+  "openai-playwright-interactive": "software-development",
+  "openai-develop-web-game": "software-development",
+  "openai-frontend-skill": "software-development",
+  "openai-screenshot": "software-development",
+
+  "gmail": "productivity",
+  "gcalcli-calendar": "productivity",
+  "himalaya": "productivity",
+  "email": "productivity",
+  "linear": "productivity",
+  "apple-notes": "productivity",
+  "apple-reminders": "productivity",
+  "findmy": "productivity",
+  "maps": "productivity",
+  "resend-resend": "productivity",
+  "discrod": "productivity",
+  "discord-bot": "productivity",
+  "imessage": "productivity",
+
+  "godmode": "red-teaming",
+
+  "repo-transmute": "repo-transmute",
+
+  "academic-source-compilation": "research",
+  "arxiv": "research",
+  "blogwatcher": "research",
+  "llm-wiki": "research",
+  "polymarket": "research",
+  "research-paper-writing": "research",
+  "deep-research": "research",
+  "morning-briefing": "research",
+
+  "notiondevs-Notion Skills for Claude": "productivity",
+  "notion-api": "productivity",
+  "notion": "productivity",
+  "makenotion-knowledge-capture": "productivity",
+  "makenotion-meeting-intelligence": "productivity",
+  "makenotion-research-documentation": "productivity",
+  "makenotion-spec-to-implementation": "productivity",
+
+  "googleworkspace-gws-admin-reports": "productivity",
+  "googleworkspace-gws-calendar": "productivity",
+  "googleworkspace-gws-chat": "productivity",
+  "googleworkspace-gws-classroom": "productivity",
+  "googleworkspace-gws-docs": "productivity",
+  "googleworkspace-gws-drive": "productivity",
+  "googleworkspace-gws-events": "productivity",
+  "googleworkspace-gws-forms": "productivity",
+  "googleworkspace-gws-gmail": "productivity",
+  "googleworkspace-gws-keep": "productivity",
+  "googleworkspace-gws-modelarmor": "productivity",
+  "googleworkspace-gws-people": "productivity",
+  "googleworkspace-gws-shared": "productivity",
+  "googleworkspace-gws-sheets": "productivity",
+  "googleworkspace-gws-slides": "productivity",
+  "googleworkspace-gws-tasks": "productivity",
+  "googleworkspace-gws-workflow": "productivity",
+  "google-gemini-gemini-api-dev": "productivity",
+  "google-gemini-gemini-interactions-api": "productivity",
+  "google-gemini-gemini-live-api-dev": "productivity",
+  "google-gemini-vertex-ai-api-dev": "productivity",
+  "google-cloud-agent-platform-skill-registry": "productivity",
+  "google-cloud-alloydb-basics": "productivity",
+  "google-cloud-bigquery-basics": "productivity",
+  "google-cloud-cloud-run-basics": "productivity",
+  "google-cloud-cloud-sql-basics": "productivity",
+  "google-cloud-firebase-basics": "productivity",
+  "google-cloud-gemini-agents-api": "productivity",
+  "google-cloud-gemini-api": "productivity",
+  "google-cloud-gemini-interactions-api": "productivity",
+  "google-cloud-gke-basics": "productivity",
+  "google-cloud-google-cloud-networking-observability": "productivity",
+  "google-cloud-google-cloud-recipe-auth": "productivity",
+  "google-cloud-google-cloud-recipe-onboarding": "productivity",
+  "google-cloud-google-cloud-waf-cost-optimization": "productivity",
+  "google-cloud-google-cloud-waf-operational-excellence": "productivity",
+  "google-cloud-google-cloud-waf-performance-optimization": "productivity",
+  "google-cloud-google-cloud-waf-reliability": "productivity",
+  "google-cloud-google-cloud-waf-security": "productivity",
+  "google-cloud-google-cloud-waf-sustainability": "productivity",
+  "google-labs-code-design-md": "productivity",
+  "google-labs-code-enhance-prompt": "productivity",
+  "google-labs-code-react-components": "productivity",
+  "google-labs-code-remotion": "productivity",
+  "google-labs-code-shadcn-ui": "productivity",
+  "google-labs-code-stitch-loop": "productivity",
+};
+// ── Category map: skill name → category ──
+const CATEGORY_MAP = {
+  // agents (17 skills)
+  "zoul": "agents", "zoul-delegation": "agents", "zoul-soul": "agents",
+  "main": "agents", "codi": "agents", "planner": "agents", "coder": "agents",
+  "reviewer": "agents", "researcher": "agents", "automator": "agents",
+  "browser-agent": "agents", "nginxmanagerbot": "agents", "journal": "agents",
+  "coach": "agents", "knowledge-manager": "agents", "mediamaker": "agents",
+  "heartbeat": "agents", "ubd-docx-generator": "agents", "curriculum-design": "agents",
+  // autonomous-ai-agents (7 skills)
+  "autonomous-ai-agents": "autonomous-ai-agents",
+  "claude-code": "autonomous-ai-agents",
+  "codex": "autonomous-ai-agents",
+  "opencode": "autonomous-ai-agents",
+  "opencode-hermes-multiagent": "autonomous-ai-agents",
+  "roadmap-engine": "autonomous-ai-agents",
+  "self-improvement-engine": "autonomous-ai-agents",
+  "multi-provider-llm-backoff": "autonomous-ai-agents",
+  "kanban-codex-lane": "autonomous-ai-agents",
+  // autonomous-cron-pipeline
+  "autonomous-cron-pipeline": "autonomous-cron-pipeline",
+  "nanobot-to-hermes-migration": "autonomous-cron-pipeline",
+  // creative (20 skills)
+  "creative-ideation": "creative", "p5js": "creative", "pixel-art": "creative",
+  "excalidraw": "creative", "baoyu-article-illustrator": "creative",
+  "baoyu-comic": "creative", "baoyu-infographic": "creative",
+  "design-md": "creative", "claude-design": "creative", "comfyui": "creative",
+  "sketch": "creative", "songwriting-and-ai-music": "creative",
+  "ascii-art": "creative", "ascii-video": "creative", "humanizer": "creative",
+  "popular-web-designs": "creative", "architecture-diagram": "creative",
+  "manim-video": "creative", "pretext": "creative", "touchdesigner-mcp": "creative",
+  // data-science
+  "jupyter-live-kernel": "data-science",
+  // devops (15 skills)
+  "agent-os-architecture": "devops", "canary-watch": "devops",
+  "casaos-webhook-emitter-impl": "devops", "context-budget": "devops",
+  "cost-aware-llm-pipeline": "devops", "deployment-patterns": "devops",
+  "docker-patterns": "devops", "git-workflow": "devops", "go": "devops",
+  "hermes-docker-sync-setup": "devops", "infrastructure-as-code": "devops",
+  "kanban-orchestrator": "devops", "kanban-worker": "devops",
+  "multi-provider-api-calls": "devops", "repo-catalog": "devops",
+  "repo-init": "devops", "webhook-subscriptions": "devops",
+  // github (7 skills)
+  "github-auth": "github", "github-code-review": "github",
+  "github-issues": "github", "github-pr-workflow": "github",
+  "github-repo-management": "github", "repo-discovery": "github",
+  "codebase-inspection": "github",
+  // hermes
+  "hermes-agent": "hermes", "hermes-docker-workflow": "hermes",
+  // hermes-computer
+  "hermes-computer": "hermes-computer",
+  // mcp
+  "native-mcp": "mcp",
+  // media (5 skills)
+  "spotify": "media", "songsee": "media", "youtube-content": "media",
+  "gif-search": "media", "heartmula": "media",
+  // note-taking
+  "obsidian": "note-taking", "obsidian-vault": "note-taking",
+  // planning
+  "blueprint": "planning", "nanobot-integration-plan": "planning",
+  "product-lens": "planning",
+  // productivity (15 skills)
+  "gcalcli-calendar": "productivity", "gmail": "productivity",
+  "linear": "productivity", "maps": "productivity", "nano-pdf": "productivity",
+  "notion": "productivity", "ocr-and-documents": "productivity",
+  "powerpoint": "productivity", "teams-meeting-pipeline": "productivity",
+  "teac-assignment-writing": "productivity", "university-essay": "productivity",
+  "google-workspace": "productivity", "airtable": "productivity",
+  "automation-workflows": "productivity", "casaos-backend-api-extension": "productivity",
+  // research (5 skills)
+  "arxiv": "research", "blogwatcher": "research", "llm-wiki": "research",
+  "polymarket": "research", "morning-briefing": "research",
+  "morning-briefing.migrated": "research",
+  // smart-home
+  "openhue": "smart-home",
+  // social-media
+  "xurl": "social-media", "x-twitter-scraper": "social-media",
+  // software-development (22 skills)
+  "autonomous-development": "software-development", "benchmark": "software-development",
+  "coding-standards": "software-development", "debug-mantra": "software-development",
+  "debugging-hermes-tui-commands": "software-development", "e2e-testing": "software-development",
+  "hermes-agent-skill-authoring": "software-development", "node-inspect-debugger": "software-development",
+  "plan": "software-development", "post-mortem": "software-development",
+  "python-debugpy": "software-development", "requesting-code-review": "software-development",
+  "scrutinize": "software-development", "search-first": "software-development",
+  "security-review": "software-development", "skill-selector": "software-development",
+  "skill-selector-prep": "software-development", "spike": "software-development",
+  "structured-code-review": "software-development", "subagent-driven-development": "software-development",
+  "svelte-development": "software-development", "systematic-debugging": "software-development",
+  "test-driven-development": "software-development", "vite-patterns": "software-development",
+  "writing-plans": "software-development",
+  // red-teaming
+  "godmode": "red-teaming",
+  // mlops
+  "huggingface-hub": "mlops",
+  // repo-transmute
+  "repo-transmute": "repo-transmute",
+};
+
 const SKILLS = [
 {"name":"codi","path":"/home/hermeswebui/.hermes/skills/codi","description":"Codi — code ingestion and refactoring agent. Specialized in understanding large codebases, refactoring, and code","tags":[],"size_mb":0.0,"is_local":true,"source":"hermes-agent"},
   {"name":"`-grill-me`","path":"/home/hermeswebui/.hermes/skills/`-grill-me`","description":"for non-code uses","tags":[],"size_mb":0.0,"is_local":true,"source":"hermes-agent"},
@@ -4422,9 +4828,62 @@ const SKILLS = [
   {"name":"Vercel Agent Skills Repository","path":"","description":"","tags":[],"size_mb":0.0,"is_local":false,"source":"vercel-labs-skills"}
 ];
 
+// ── Derive category for each skill ──
+SKILLS.forEach(s => {
+  s.category = CATEGORY_MAP[s.name] ||
+               (s.source === 'hermes-agent' ? 'hermes' :
+                s.source.startsWith('NVIDIA') ? 'mlops' :
+                s.source.startsWith('google') ? 'productivity' :
+                s.source.startsWith('openai') ? 'software-development' :
+                s.source.startsWith('microsof') ? 'devops' :
+                s.source.startsWith('huggingface') ? 'mlops' :
+                s.tags.includes('github') || s.name.includes('github') ? 'github' :
+                s.tags.includes('docker') || s.name.includes('docker') ? 'devops' :
+                s.tags.includes('cron') || s.name.includes('cron') ? 'autonomous-cron-pipeline' :
+                s.tags.includes('research') || s.name.includes('research') ? 'research' :
+                s.tags.includes('browser') || s.name.includes('playwright') ? 'software-development' :
+                s.tags.includes('security') || s.name.includes('security') ? 'red-teaming' :
+                'hermes');
+});
+
 // ═══════════════════════════════════════════════════════════════
 //  COLORS & CATEGORIES
 // ═══════════════════════════════════════════════════════════════
+
+
+// ── Derive category for each skill ──
+SKILLS.forEach(s => {
+  if (CATEGORY_MAP[s.name]) {
+    s.category = CATEGORY_MAP[s.name];
+  } else if (s.source && s.source.startsWith('NVIDIA')) {
+    s.category = 'mlops';
+  } else if (s.source && s.source.startsWith('google')) {
+    s.category = 'productivity';
+  } else if (s.source && s.source.startsWith('openai')) {
+    s.category = 'software-development';
+  } else if (s.source && s.source.startsWith('microsof')) {
+    s.category = 'devops';
+  } else if (s.source && s.source.startsWith('huggingface')) {
+    s.category = 'mlops';
+  } else if (s.source && s.source.startsWith('vercel-labs')) {
+    s.category = 'software-development';
+  } else if (s.source && s.source.startsWith('firebase')) {
+    s.category = 'productivity';
+  } else if (s.tags && s.tags.some(t => ['github','git','pr','repo'].includes(t))) {
+    s.category = 'github';
+  } else if (s.tags && s.tags.some(t => ['docker','kubernetes','terraform','aws','cloud','deployment','ci-cd'].includes(t))) {
+    s.category = 'devops';
+  } else if (s.tags && s.tags.some(t => ['browser','playwright','e2e','testing'].includes(t))) {
+    s.category = 'software-development';
+  } else if (s.tags && s.tags.some(t => ['security','llm','jailbreak'].includes(t))) {
+    s.category = 'red-teaming';
+  } else if (s.source === 'hermes-agent') {
+    s.category = 'hermes';
+  } else {
+    s.category = 'hermes';
+  }
+});
+
 const CAT_COLORS = {
   "agents":                  "#f9c74f",
   "autonomous-ai-agents":    "#ff6b6b",
@@ -4855,11 +5314,21 @@ document.getElementById("ctx-lock").onclick = () => {
   if (ctxTarget.locked) { ctxTarget.fx = ctxTarget.x; ctxTarget.fy = ctxTarget.y; }
   else { ctxTarget.fx = null; ctxTarget.fy = null; }
   render();
+
+  document.getElementById("ctx-menu").classList.remove("visible");
 };
 
 document.getElementById("ctx-copy").onclick = () => {
   if (!ctxTarget) return;
   navigator.clipboard.writeText(ctxTarget.name).catch(() => {});
+  document.getElementById("ctx-menu").classList.remove("visible");
+};
+
+
+document.getElementById("ctx-gh").onclick = function() {
+  if (!ctxTarget) return;
+  const ghUrl = `https://github.com/ChonSong/hermes-agent/blob/main/skills/${ctxTarget.name}/SKILL.md`;
+  window.open(ghUrl, "_blank");
   document.getElementById("ctx-menu").classList.remove("visible");
 };
 
