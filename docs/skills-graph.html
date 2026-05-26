@@ -5499,6 +5499,16 @@ function reheat() {
 }
 
 rebuild();
+try {
+  console.log('SKILLS length:', SKILLS.length);
+  console.log('first skill:', JSON.stringify(SKILLS[0]));
+  console.log('first cat:', SKILLS[0].category);
+  const data = buildGraph();
+  console.log('nodes from buildGraph:', data.nodes.length);
+  console.log('edges from buildGraph:', data.edges.length);
+} catch(e) {
+  console.error('init error:', e.message, e.stack);
+}
 </script>
 </body>
 </html>
