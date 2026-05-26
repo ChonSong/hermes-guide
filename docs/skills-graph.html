@@ -878,7 +878,7 @@ function buildGraph() {
 // ═══════════════════════════════════════════════════════════════
 //  D3 SETUP
 // ═══════════════════════════════════════════════════════════════
-const svg = d3.select("#graph");
+const svg = d3.select("#graph").attr("viewBox", "0 0 1120 859");
 const W = () => document.getElementById("canvas-wrap").clientWidth;
 const H = () => document.getElementById("canvas-wrap").clientHeight;
 
@@ -965,7 +965,9 @@ function render() {
     .attr("stroke", d => d.type === "cat" ? CAT_COLORS[d.source.category] || "#555" : d.type === "rel" ? "#f9c74f" : "#4dabf7")
     .attr("stroke-opacity", d => d.type === "cat" ? edgeOpac * 0.5 : d.type === "rel" ? edgeOpac : edgeOpac * 0.3)
     .attr("stroke-dasharray", d => d.type === "rel" ? "5,3" : d.type === "tag" ? "2,3" : null)
-    .attr("display", d => (d.source.visible && d.target.visible) ? null : "none");
+    .attr("display", d => (d.source.visible && d.target.visible) ? null : "none")
+    .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
 
   // ── NODES ──
   const nodeSel = nodeG.selectAll("g.node").data(nodeData, d => d.id);
@@ -986,13 +988,17 @@ function render() {
       .on("drag", onDrag)
       .on("end", onDragEnd));
 
+  nodeAll.attr("transform", d => `translate(${d.x},${d.y})`);
+
   nodeAll.select(".node-circle")
+    .attr("cx", 0).attr("cy", 0)
     .attr("r", d => d.displayR)
     .attr("fill", d => CAT_COLORS[d.category] || "#888")
     .attr("stroke", d => d.locked ? "#fff" : "none")
     .attr("stroke-width", d => d.locked ? 2 : 0);
 
   nodeAll.select(".node-ring")
+    .attr("cx", 0).attr("cy", 0)
     .attr("r", d => d.displayR + 4)
     .attr("stroke", d => d.selected ? "#fff" : CAT_COLORS[d.category] || "#888")
     .attr("stroke-opacity", d => d.selected ? 1 : 0.3);
@@ -1009,6 +1015,7 @@ function render() {
       .style("pointer-events", "none")
       .style("user-select", "none")
       .merge(labelSel)
+      .attr("x", d => d.x).attr("y", d => d.y)
       .attr("display", d => d.displayR >= 7 ? null : "none")
       .text(d => d.name.length > 20 ? d.name.slice(0,18) + "…" : d.name);
   } else {
