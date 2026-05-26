@@ -1,812 +1,396 @@
 # Hermes Skills — Complete Guide
 
-> **Version:** 2.x | **Location:** `~/.hermes/skills/` (host) / `/opt/data/skills/` (container)
->
-> Skills are Hermes Agent's self-improvement system. When Hermes encounters a task, learns a workflow, or gets corrected, it can save that knowledge as a skill document that loads automatically in future sessions. Over time, the agent gets better at your specific tasks and environment. This guide covers everything about finding, using, managing, and authoring skills.
+> **146 skills across 26 categories** | **Auto-loading** | **Skill-selector scores every turn**
+> **Docs:** [hermes-agent.nousresearch.com/docs/reference/skills-catalog](https://hermes-agent.nousresearch.com/docs/reference/skills-catalog)
+
+Skills are Hermes Agent's self-improvement system. They're Markdown procedure documents that the agent loads when relevant — encoding tested workflows, not just facts. With every session, Hermes learns your specific environment and improves.
 
 ---
 
 ## Table of Contents
 
 1. [What Are Skills?](#1-what-are-skills)
-2. [How Skills Work](#2-how-skills-work)
-3. [Finding the Right Skill](#3-finding-the-right-skill)
-4. [Installing Skills](#4-installing-skills)
-5. [Loading Skills into a Session](#5-loading-skills-into-a-session)
-6. [Key Skills Catalog](#6-key-skills-catalog)
-7. [Skill Categories](#7-skill-categories)
-8. [Authoring New Skills](#8-authoring-new-skills)
-9. [Skill Authoring Format](#9-skill-authoring-format)
-10. [Best Practices](#10-best-practices)
-11. [Skill Management](#11-skill-management)
-12. [Skill Limitations & Gotchas](#12-skill-limitations--gotchas)
+2. [How Skills Load — Three Mechanisms](#2-how-skills-load--three-mechanisms)
+3. [The 26 Categories — Full Reference](#3-the-26-categories--full-reference)
+4. [Skill Selector — How Auto-Matching Works](#4-skill-selector--how-auto-matching-works)
+5. [Core Skills to Start With](#5-core-skills-to-start-with)
+6. [Authoring New Skills](#6-authoring-new-skills)
+7. [Skill File Format](#7-skill-file-format)
+8. [Limitations and Pitfalls](#8-limitations-and-pitfalls)
+9. [Skill Management Commands](#9-skill-management-commands)
 
 ---
 
 ## 1. What Are Skills?
 
-Skills are Markdown documents (`.md` files) that encode reusable procedures, workflows, and knowledge. They're the difference between Hermes as a general-purpose assistant and Hermes customized for *your* specific setup.
+A skill is a Markdown file with YAML frontmatter that encodes a reusable, tested procedure. Unlike a one-shot prompt, a skill is:
 
-**Think of them as:**
+- **Persistent** — lives in `~/.hermes/skills/`, loaded on demand
+- **Contextual** — auto-matched to your message using keyword + description scoring
+- **Versioned** — tracked in git, self-improving over time
+- **Tested** — verified workflow before being relied upon
 
-| Analogy | What it means |
-|---------|---------------|
-| **Apps for the agent** | Skills are installable capabilities — like apps on a phone |
-| **Experienced memory** | Rather than relearning how to do something, Hermes loads the skill and follows the proven steps |
-| **Trainable procedures** | You can teach Hermes new workflows by writing or generating skill documents |
-| **Context shortcuts** | Instead of explaining the full context every time, just load the relevant skill |
+**Why skills beat prompts:**
 
-**Skills are NOT:**
-- Code that runs on its own — Hermes reads them and follows the instructions
-- Prompts — they're structured procedure documents with frontmatter metadata
-- Magic — a bad skill produces bad results
+| Prompt | Skill |
+|--------|-------|
+| "Write code" | TDD → RED → GREEN → REFACTOR with test file placement conventions |
+| "Review code" | Security checklist + code quality rubric + PR comment format |
+| "Deploy" | Build → push → CI check → notify failure chain |
 
-### 1.1 What a Skill Looks Like
-
-```markdown
----
-name: github-pr-workflow
-description: GitHub PR lifecycle: branch, commit, open, CI, merge.
-category: github
----
-
-# GitHub PR Workflow
-
-## When to Use
-Use when you need to create a PR, check CI status, or merge code.
-
-## Prerequisites
-- `gh` CLI authenticated (`gh auth login`)
-- Repo cloned locally
-- Working directory is the repo root
-
-## Step 1 — Branch
-Create a new branch:
-```bash
-git checkout -b feature/my-feature
-```
-
-## Step 2 — Commit
-Stage and commit:
-```bash
-git add .
-gh commit -m "feat: add my feature"
-```
-
-## Step 3 — Push
-Push to origin:
-```bash
-git push -u origin HEAD
-```
-
-## Step 4 — Create PR
-```bash
-gh pr create --title "feat: my feature" --body "Description"
-```
-
-## Step 5 — Check CI
-```bash
-gh pr checks
-```
-
-## Step 6 — Merge
-After CI passes:
-```bash
-gh pr merge --squash
-```
-```
-
-### 1.2 Skill vs SOUL.md vs MEMORY.md
-
-| File | Purpose | When it loads |
-|------|---------|---------------|
-| **SOUL.md** | Agent personality and core principles | Every session, always |
-| **MEMORY.md** | Long-term user facts, preferences, lessons | Every session, always |
-| **Skill** | Specific task procedure | On demand or matching trigger |
-| **Daily memory** | Session logs and what happened today | Every session, always |
-
-Skills are situational — loaded when relevant. MEMORY.md and SOUL.md are always loaded.
+A bad procedure produces bad results. Skills encode *how* to do something correctly, not just *what* to do.
 
 ---
 
-## 2. How Skills Work
+## 2. How Skills Load — Three Mechanisms
 
-### 2.1 Skill Loading
+### Mechanism 1: Auto-Match (skill-selector)
 
-When you type a message, Hermes checks all installed skills against your message using a lightweight scorer. Matching skills are loaded into the system prompt for that session. The more specific the match, the better the skill applies.
+Every turn, the skill-selector scores all 146 skills against your message. Matches ≥3.0 load silently. Matches between 1.5–3.0 load with a notification in the agent's response. Below 1.5, not loaded.
 
-**Loading methods:**
+Scoring uses:
+- Keyword overlap (your message words vs skill name/tags)
+- Description relevance (semantic similarity)
+- Workspace context (which repos you're working in)
+- Category affinity (certain categories reinforce each other)
 
-| Method | How | When it applies |
-|--------|-----|----------------|
-| **Auto-match** | Skill triggers (keywords in message) match against your input | Every turn, automatically |
-| **Slash command** | `/skill skill-name` during chat | Current session only |
-| **Startup flag** | `hermes -s skill1,skill2` | Session lifetime |
-| **cronjob tool** | `skills: ["skill-name"]` in cron job config | Job execution only |
+**Example:** You type "morning briefing setup" → `morning-briefing` skill scores 4.2 and loads silently. You get the full briefing workflow without asking for it.
 
-### 2.2 Auto-Matching
+### Mechanism 2: Explicit /skill name
 
-Skills have a `description` field and optional `tags`. The skill selector scores each skill against the current message. High-scoring skills load silently. If >100MB of skills would load, Hermes asks before loading.
+During chat, type `/skill skill-name` to load it immediately. Current session only — does not persist after `/reset`.
 
-The skill selector runs every turn and is lightweight — it's based on cached metadata from skill-selector-prep (a weekly cron job that syncs metadata for all skills).
+```
+You: /skill github-pr-workflow
+→ Skill loaded: github-pr-workflow
+→ Ready to review PRs with full workflow
+```
 
-### 2.3 Skill Priority and Conflict
+### Mechanism 3: -s Flag at Startup
 
-If two skills cover the same ground, Hermes loads both but the order matters. Skills loaded by keyword match are prepended to the system prompt before skills loaded by slash command. If procedures conflict, the last-loaded wins.
+Preload skills when Hermes starts:
 
-### 2.4 Skill Expiration
+```bash
+# Preload multiple skills
+hermes -s github-auth,coder,reviewer
 
-Skills don't expire. Once installed, they persist until you uninstall them. However, skills that haven't been used in a long time may have outdated instructions — check periodically.
+# In config.yaml
+model:
+  default: anthropic/claude-sonnet-4
+  startup_skills:
+    - github-auth
+    - coder
+```
+
+Good for skills you use every session — saves the auto-match overhead on common tasks.
 
 ---
 
-## 3. Finding the Right Skill
+## 3. The 26 Categories — Full Reference
 
-### 3.1 Search from CLI
+| Category | # Skills | What It Covers |
+|----------|----------|----------------|
+| `agents` | 17 | Orchestrator agents (zoul, planner, coder, reviewer, etc.) |
+| `autonomous-ai-agents` | 7 | Spawning/coordination of autonomous coding agents |
+| `autonomous-cron-pipeline` | 4 | Multi-phase cron job chains with state files |
+| `creative` | 20 | ASCII art, video, design, songwriting, image generation |
+| `data-science` | 1 | Jupyter live kernel, data exploration |
+| `devops` | 15 | Docker, Git, CI/CD, deployment patterns, infra-as-code |
+| `github` | 7 | PR workflow, issues, repo management, code review |
+| `hermes` | 2 | Hermes Agent itself (CLI, config, gateway) |
+| `hermes-computer` | 1 | hermes-web-computer (Go+Svelte5 workspace) |
+| `mcp` | 1 | Model Context Protocol servers and integrations |
+| `media` | 5 | YouTube, Spotify, GIF search, audio spectrograms |
+| `mlops` | 1 | HuggingFace hub, model serving |
+| `mlops/evaluation` | 2 | LLM benchmarking, W&B experiment tracking |
+| `mlops/inference` | 4 | vLLM serving, llama.cpp, GGUF quantization |
+| `mlops/models` | 2 | SAM segmentation, AudioCraft music generation |
+| `mlops/research` | 1 | DSPy declarative LM programs |
+| `mlops/training` | 3 | Axolotl, TRL RLHF/DPO, Unsloth fine-tuning |
+| `note-taking` | 1 | Obsidian vault integration |
+| `planning` | 3 | Blueprint, nanobot integration, product lens |
+| `productivity` | 15 | Gmail, Google Calendar, Notion, Airtable, Maps, PowerPoint |
+| `red-teaming` | 1 | LLM jailbreaking techniques |
+| `repo-transmute` | 1 | Vision-driven codebase migration |
+| `research` | 5 | arXiv, blog monitoring, LLM Wiki, Polymarket |
+| `smart-home` | 2 | Philips Hue lighting control |
+| `social-media` | 3 | X/Twitter posting and monitoring |
+| `software-development` | 22 | Debugging, TDD, architecture, E2E testing, Svelte, Vite |
 
-```bash
-# Search by keyword
-docker exec hermes /opt/hermes/.venv/bin/hermes skills search "github"
-
-# Search by category
-docker exec hermes /opt/hermes/.venv/bin/hermes skills search "devops"
-
-# Browse all available skills
-docker exec hermes /opt/hermes/.venv/bin/hermes skills browse
-```
-
-### 3.2 Search in WebUI
-
-Open `/skills` in Hermes WebUI. Browse by category, search by name/description/tags/triggers, filter by risk level.
-
-### 3.3 Ask Hermes
-
-The simplest method: "What skill should I use for [task]?" Hermes will search its installed skills and recommend one.
-
-### 3.4 Skill Categories (WebUI)
-
-| Category | What it covers |
-|----------|---------------|
-| All | Everything |
-| Web & Frontend | CSS, HTML, JS, React, Svelte |
-| Coding Agents | Coder, reviewer, refactor, debug agents |
-| Git & GitHub | PRs, issues, repos, git workflows |
-| DevOps & Cloud | Docker, CI/CD, deployment, infra |
-| Browser & Automation | Playwright, browser agents, scraping |
-| Image & Video | Image generation, video, ASCII art |
-| Search & Research | arXiv, web search, blogwatcher |
-| AI & LLMs | Model serving, fine-tuning, evaluation |
-| Productivity | Docs, calendar, email, Notion, Airtable |
-| Marketing & Sales | Social media, copywriting |
-| Communication | Discord, Telegram, Slack |
-| Data & Analytics | Jupyter, data processing, visualization |
-| Finance & Crypto | (specialized financial tools) |
-
----
-
-## 4. Installing Skills
-
-### 4.1 From the CLI
-
-```bash
-# List installed skills
-docker exec hermes /opt/hermes/.venv/bin/hermes skills list
-
-# Install a skill from the catalog
-docker exec hermes /opt/hermes/.venv/bin/hermes skills install github-auth
-
-# Inspect a skill before installing
-docker exec hermes /opt/hermes/.venv/bin/hermes skills inspect skill-name
-
-# Check for updates
-docker exec hermes /opt/hermes/.venv/bin/hermes skills check
-
-# Update outdated skills
-docker exec hermes /opt/hermes/.venv/bin/hermes skills update
-
-# Uninstall
-docker exec hermes /opt/hermes/.venv/bin/hermes skills uninstall skill-name
-```
-
-### 4.2 From the WebUI
-
-1. Go to `/skills`
-2. Browse the **Marketplace** tab
-3. Search or filter by category
-4. Click **Install** on any skill
-5. The skill downloads to `~/.hermes/skills/`
-
-### 4.3 From Git
-
-```bash
-# Add a GitHub repo as a skill source
-docker exec hermes /opt/hermes/.venv/bin/hermes skills tap add https://github.com/user/skill-repo
-
-# Then install from that source
-docker exec hermes /opt/hermes/.venv/bin/hermes skills install skill-from-repo
-```
-
-### 4.4 Manually (Write Your Own)
-
-Create a `.md` file in `~/.hermes/skills/your-skill/SKILL.md`. See the [Authoring section](#9-skill-authoring-format) for the format.
-
----
-
-## 5. Loading Skills into a Session
-
-### 5.1 Slash Command (Current Session)
+### The Skill Taxonomy (Visual)
 
 ```
-/skill github-auth
-```
-
-The skill loads immediately and its instructions are available for the rest of the session. `/reset` unloads everything and starts fresh.
-
-### 5.2 Startup Flag (Session Lifetime)
-
-```bash
-# Load multiple skills at startup
-docker exec -it hermes /opt/hermes/.venv/bin/hermes --tui -s github-auth,coder,researcher
-
-# In Docker Compose, set in environment or command
-```
-
-### 5.3 cronjob Tool (Job Execution)
-
-```bash
-# Create a cron job that loads specific skills
-cronjob(
-  action='create',
-  name='Morning research',
-  schedule='0 8 * * MON-FRI',
-  prompt='Summarize the top 5 AI news stories from yesterday',
-  skills=['researcher', 'web'],
-  deliver='origin'
-)
-```
-
-### 5.4 Auto-Match (Automatic)
-
-Skills with matching triggers load automatically. For example, a skill with `triggers: ["github pr", "pull request"]` loads automatically when you mention "create a PR" or "check the CI status".
-
----
-
-## 6. Key Skills Catalog
-
-These are the most important skills for this Hermes setup:
-
-### 6.1 Core System Skills
-
-| Skill | What it does |
-|-------|-------------|
-| **`hermes-agent`** | Complete guide to Hermes Agent — CLI, config, delegation, gateway, tools. **Load this first if anything isn't working.** |
-| **`hermes-computer`** | Building and extending Hermes Web Computer — Go + Svelte 5 tiling desktop |
-| **`hermes-docker-workflow`** | Docker build, run, and troubleshooting for Hermes containers |
-| **`hermes-agent-skill-authoring`** | How to write good skill documents — format, frontmatter, validator |
-| **`skill-selector`** | Every-turn skill scorer — auto-loads matching skills. Runs silently every turn. |
-
-### 6.2 Git & GitHub
-
-| Skill | When to use |
-|-------|-------------|
-| **`github-auth`** | Authenticate GitHub — tokens, SSH keys, `gh` CLI login |
-| **`github-pr-workflow`** | Create PRs, check CI, merge — the full PR lifecycle |
-| **`github-code-review`** | Review PR diffs with inline comments |
-| **`github-repo-management`** | Clone, fork, manage remotes and releases |
-| **`github-issues`** | Create, triage, label, assign GitHub issues |
-
-### 6.3 Coding & Development
-
-| Skill | When to use |
-|-------|-------------|
-| **`coder`** | Code generation — write new code, features, scripts |
-| **`reviewer`** | Quality assurance — code review, testing, best practices |
-| **`codi`** | Code ingestion and refactoring — understand large codebases |
-| **`subagent-driven-development`** | Execute plans via subagents with 2-stage review |
-| **`autonomous-development`** | Build features end-to-end from spec |
-| **`test-driven-development`** | TDD workflow — tests before code |
-| **`systematic-debugging`** | 4-phase root cause debugging |
-| **`e2e-testing`** | Playwright E2E testing patterns |
-| **`svelte-development`** | Svelte 5 runes mode syntax and patterns |
-| **`vite-patterns`** | Vite build tool patterns |
-| **`node-inspect-debugger`** | Debug Node.js via Chrome DevTools Protocol |
-| **`python-debugpy`** | Debug Python via debugpy remote DAP |
-
-### 6.4 Multi-Agent & Delegation
-
-| Skill | When to use |
-|-------|-------------|
-| **`delegation-patterns`** | How to delegate to subagents — when to use what pattern |
-| **`claude-code`** | Delegate to Claude Code CLI for PRs and features |
-| **`codex`** | Delegate to OpenAI Codex CLI |
-| **`opencode`** | Delegate to OpenCode CLI |
-| **`roadmap-engine`** | Long-horizon autonomous planning — runs nightly |
-| **`self-improvement-engine`** | Process learnings, rank candidates, author new skills |
-| **`autonomous-cron-pipeline`** | Multi-phase autonomous projects via chained cron jobs |
-| **`kanban-orchestrator`** | Decomposition playbook for orchestrating Kanban workers |
-| **`kanban-worker`** | Best practices for Kanban worker agents |
-
-### 6.5 Research & Web
-
-| Skill | When to use |
-|-------|-------------|
-| **`researcher`** | Web search, data extraction, research synthesis |
-| **`arxiv`** | Search arXiv papers by keyword, author, category |
-| **`blogwatcher`** | Monitor RSS/Atom feeds |
-| **`polymarket`** | Query prediction markets |
-| **`academic-source-compilation`** | Collect and verify academic sources, APA7 references |
-| **`dogfood`** | Exploratory QA of web apps — find bugs and report them |
-
-### 6.6 Automation & Cron
-
-| Skill | When to use |
-|-------|-------------|
-| **`autonomous-cron-pipeline`** | **The key skill for multi-phase autonomous work.** Chain cron jobs with dependencies. |
-| **`cron-script-only`** | Run raw scripts as cron jobs (no LLM) |
-| **`webhook-subscriptions`** | Event-driven agent runs via webhooks |
-| **`automation-workflows`** | Design automation workflows across tools |
-
-### 6.7 Creative & Media
-
-| Skill | When to use |
-|-------|-------------|
-| **`excalidraw`** | Hand-drawn Excalidraw diagrams |
-| **`ascii-art`** | ASCII art generation |
-| **`ascii-video`** | Convert video to colored ASCII |
-| **`comfyui`** | Generate images/video with ComfyUI |
-| **`humanizer`** | Strip AI-isms from text, add real voice |
-| **`p5js`** | Generative art, shaders, interactive sketches |
-| **`pixel-art`** | Pixel art with era palettes |
-| **`architecture-diagram`** | Dark-themed SVG architecture diagrams |
-
-### 6.8 Productivity
-
-| Skill | When to use |
-|-------|-------------|
-| **`notion`** | Notion API — pages, databases, markdown |
-| **`notion-api`** | Generic Notion CLI |
-| **`obsidian`** | Read, search, edit Obsidian vault notes |
-| **`gcalcli-calendar`** | Google Calendar via gcalcli |
-| **`gmail`** | Gmail API integration |
-| **`airtable`** | Airtable REST API — CRUD, filters, upserts |
-| **`linear`** | Linear project management via GraphQL |
-| **`powerpoint`** | Create and edit PowerPoint decks |
-| **`ocr-and-documents`** | Extract text from PDFs and scans |
-| **`nano-pdf`** | Edit PDF text via NL prompts |
-
-### 6.9 Morning Briefing
-
-| Skill | When to use |
-|-------|-------------|
-| **`morning-briefing`** | Daily news + weather + calendar + email summary. Schedule via cron at 8 AM Mon-Fri. |
-
-### 6.10 Deployment & DevOps
-
-| Skill | When to use |
-|-------|-------------|
-| **`deployment-patterns`** | CI/CD pipelines, Docker, health checks |
-| **`docker-patterns`** | Docker Compose patterns, security, networking |
-| **`infrastructure-as-code`** | Terraform for Cloudflare, AWS |
-| **`git-workflow`** | Branching strategies, conventional commits |
-| **`canary-watch`** | Post-deploy monitoring for regressions |
-| **`repo-init`** | Initialize new project repos from scratch |
-
-### 6.11 Home & Smart Home
-
-| Skill | When to use |
-|-------|-------------|
-| **`openhue`** | Control Philips Hue lights and scenes |
-| **`sonoscli`** | Control Sonos speakers |
-
-### 6.12 Platform Integration
-
-| Skill | When to use |
-|-------|-------------|
-| **`discord-bot`** | Post to Discord via REST API |
-| **`xurl`** | X/Twitter — post, search, DM, media |
-| **`spotify`** | Spotify playback control |
-
----
-
-## 7. Skill Categories
-
-Skills are organized in `~/.hermes/skills/` as subdirectories by category:
-
-```
-~/.hermes/skills/
-├── agents/          # Named agent identities (zoul, codi, coach, etc.)
-├── autonomous-ai-agents/  # Claude Code, Codex, OpenCode, roadmap engine
-├── creative/        # ASCII art, diagrams, image generation
-├── data-science/    # Jupyter, data processing
-├── devops/         # Docker, git, CI/CD, deployment
-├── github/         # GitHub PRs, issues, repos
-├── hermes/         # Hermes Agent itself
-├── hermes-computer/ # HWC development
-├── mcp/           # MCP server configuration
-├── media/         # YouTube, Spotify, GIFs
-├── mlops/         # Model serving, fine-tuning, evaluation
-├── note-taking/   # Obsidian, Notion
-├── planning/      # Blueprint, product lens
-├── productivity/  # Docs, calendar, email, Airtable
-├── red-teaming/   # Security testing
-├── research/     # arXiv, blogwatcher, Polymarket
-├── smart-home/    # Hue, Sonos
-└── social-media/  # X/Twitter, Discord
+HERMES AGENT
+  ├── AGENTS (17)              ← orchestrators, workers
+  ├── AUTONOMOUS-AI-AGENTS (7) ← spawn code agents (Codex, Claude Code)
+  ├── AUTONOMOUS-CRON-PIPELINE (4) ← chained cron jobs
+  │
+  ├── CREATIVE (20)            ← art, video, design, music
+  ├── MEDIA (5)                ← YouTube, Spotify, GIF
+  │
+  ├── DEVOPS (15)              ← Docker, Git, CI/CD, IaC
+  ├── GITHUB (7)               ← PR, issues, repo
+  │
+  ├── HERMES (2)               ← agent CLI/config
+  ├── HERMES-COMPUTER (1)      ← web-computer workspace
+  ├── MCP (1)                  ← Model Context Protocol
+  │
+  ├── MLOPS (13 total)
+  │   ├── evaluation (2)       ← benchmarks, W&B
+  │   ├── inference (4)        ← vLLM, llama.cpp
+  │   ├── models (2)           ← SAM, AudioCraft
+  │   ├── research (1)         ← DSPy
+  │   └── training (3)        ← Axolotl, TRL, Unsloth
+  │
+  ├── NOTE-TAKING (1)          ← Obsidian
+  ├── PLANNING (3)             ← blueprint, nanobot
+  ├── PRODUCTIVITY (15)         ← Gmail, Calendar, Notion, etc.
+  ├── RED-TEAMING (1)          ← LLM jailbreaking
+  ├── REPO-TRANSMUTE (1)       ← codebase migration
+  ├── RESEARCH (5)             ← arXiv, blogs, Polymarket
+  ├── SMART-HOME (2)            ← Hue lights
+  ├── SOCIAL-MEDIA (3)         ← X/Twitter
+  │
+  └── SOFTWARE-DEVELOPMENT (22) ← debugging, TDD, architecture
 ```
 
 ---
 
-## 8. Authoring New Skills
+## 4. Skill Selector — How Auto-Matching Works
 
-### 8.1 When to Write a Skill
+The `skill-selector` is itself a skill that runs every turn. It scores all installed skills against your message using:
+
+```
+score = keyword_score × 0.4 + description_score × 0.3 + tag_score × 0.2 + workspace_score × 0.1
+```
+
+**Keyword score:** Word overlap between your message and the skill's name/tags
+**Description score:** Semantic similarity (simple keyword overlap on description words)
+**Tag score:** Tag overlap with message context
+**Workspace score:** Skills matching the current workspace get a bonus
+
+**Load thresholds:**
+- ≥ 3.0 → load silently ("matched: github-pr-workflow")
+- 1.5–3.0 → load with notification ("loading: morning-briefing")
+- < 1.5 → not loaded
+
+**For cron jobs:** The skill-selector doesn't run in cron job contexts. You must explicitly list skills in the `skills:` parameter when creating a cron job.
+
+---
+
+## 5. Core Skills to Start With
+
+### Start Here
+
+| Skill | Category | Why You Need It |
+|-------|----------|-----------------|
+| `hermes-agent` | hermes | Complete CLI/config reference. Load when anything isn't working. |
+| `skill-selector` | hermes | Understand how auto-matching works — essential for debugging skill loading |
+| `github-auth` | github | Set up HTTPS tokens and SSH keys correctly. Do this first before any Git operations. |
+
+### Daily Driving
+
+| Skill | Category | Use Case |
+|-------|----------|----------|
+| `github-pr-workflow` | github | Review PRs: diff → comments → CI check → merge |
+| `morning-briefing` | productivity | Mon-Fri 8am: email + calendar + weather → Discord |
+| `autonomous-cron-pipeline` | autonomous-cron-pipeline | Multi-phase projects that span multiple cron ticks |
+| `coder` | agents | Code generation with best practices |
+| `reviewer` | agents | QA before code is committed |
+
+### Specialized
+
+| Skill | Category | Use Case |
+|-------|----------|----------|
+| `repo-transmute` | repo-transmute | Large codebase migration (OpenClaw → Hermes, etc.) |
+| `llama-cpp` | mlops/inference | Local GGUF inference with HF Hub model discovery |
+| `serving-llms-vllm` | mlops/inference | High-throughput LLM serving with OpenAI API |
+| `e2e-testing` | software-development | Playwright E2E test patterns |
+| `test-driven-development` | software-development | TDD workflow (RED → GREEN → REFACTOR) |
+| `vite-patterns` | software-development | Vite build tool patterns and plugins |
+| `fine-tuning-with-trl` | mlops/training | RLHF/DPO/GRPO training with TRL |
+| `unsloth` | mlops/training | 2-5x faster LoRA/QLoRA fine-tuning |
+| `huggingface-hub` | mlops | Search/download/upload models and datasets |
+| `blogwatcher` | research | Monitor blogs and RSS/Atom feeds |
+| `polymarket` | research | Query prediction markets for research |
+
+---
+
+## 6. Authoring New Skills
 
 Write a skill when:
-- You solved a complex problem and want to remember the procedure
-- You discovered a non-obvious workflow that works well
-- You want to teach Hermes a task-specific procedure
-- A recurring task keeps failing because Hermes doesn't know the right steps
-- You want to capture a multi-step workflow that's hard to explain each time
+- You solved a complex problem and want to reuse the approach
+- You discovered a non-obvious workflow that others should know
+- You want to capture a multi-step procedure consistently
+- A skill for your specific setup doesn't exist
 
-**Don't write a skill for:**
-- One-off tasks you'll never do again
-- Things that are already in the documentation
-- Simple tasks that Hermes handles well without a skill
+### When to Create a Skill
 
-### 8.2 Skill Authoring Best Practices
+✅ **Create when:**
+- Multi-step procedure with 5+ tool calls
+- Non-obvious approach discovered through iteration
+- Environment-specific workflow (your setup, your conventions)
+- Recurring task with consistent steps
 
-1. **Start with the trigger condition** — what message or situation should cause this skill to load?
-2. **Be specific about prerequisites** — what must be true before starting?
-3. **Number the steps** — procedures should be numbered, not paragraphs
-4. **Use real commands** — include actual CLI commands, not descriptions of commands
-5. **Add a pitfalls section** — what commonly goes wrong and how to fix it
-6. **Include verification** — how do you know the skill worked?
-7. **Keep it focused** — one skill, one workflow. Split compound skills.
+❌ **Don't create when:**
+- One-off quick task
+- Trivial procedure (just 1-2 tool calls)
+- Already covered by an existing skill
 
-### 8.3 Loading the Authoring Skill
+### The Skill Authoring Process
 
-```bash
-# Load the authoring skill first
-/skill hermes-agent-skill-authoring
+1. **Do the task manually first** — get the workflow right
+2. **Write the SKILL.md** — encode the exact steps that worked
+3. **Test in a throwaway session** — `/skill your-new-skill`, use it
+4. **Iterate** — fix wrong steps, add pitfalls discovered during testing
+5. **Save as skill** — use the `skill` tool to save it to `~/.hermes/skills/`
 
-# Or from CLI
-docker exec -it hermes /opt/hermes/.venv/bin/hermes --tui -s hermes-agent-skill-authoring
-```
+### After Creating a Skill
 
-This skill has the full format specification, validator, and examples.
-
-### 8.4 Testing a Skill Before Publishing
-
-```bash
-# Install from local path (for testing)
-docker exec hermes /opt/hermes/.venv/bin/hermes skills install /path/to/skill-dir
-
-# Or load directly without installing
-docker exec hermes /opt/hermes/.venv/bin/hermes -s /path/to/skill-name
-
-# In WebUI: install from local path or paste the SKILL.md content
-```
-
-### 8.5 Publishing Skills
-
-```bash
-# Publish to the registry
-docker exec hermes /opt/hermes/.venv/bin/hermes skills publish /path/to/skill-dir
-```
-
-The skill goes to the Hermes skill registry and becomes available for others to install.
+- Test it in a real session
+- If it has issues, update immediately with `skill_manage(action='patch')`
+- Skills that aren't maintained become liabilities — keep them current
+- For complex skills, save the supporting scripts/templates in the skill's `scripts/` or `references/` directories
 
 ---
 
-## 9. Skill Authoring Format
+## 7. Skill File Format
 
-### 9.1 Required Frontmatter
+Every skill is a Markdown file with YAML frontmatter:
 
 ```markdown
 ---
-name: skill-name
-description: One-line description of what this skill does.
-category: category-slug    # e.g., github, devops, creative
----
-```
-
-### 9.2 Optional Frontmatter
-
-```markdown
----
-name: skill-name
-description: ...
-category: ...
-tags: [tag1, tag2, tag3]          # For search and auto-match
-triggers: ["keyword1", "keyword2"]  # Phrases that auto-load this skill
-related_skills: [skill1, skill2]   # Skills that complement this one
-author: YourName
-version: 1.0.0
-metadata:
-  hermes:
-    license: MIT
-    homepage: https://github.com/you/skill-repo
----
-```
-
-### 9.3 Required Sections
-
-#### When to Use
-When this skill should be loaded. What tasks it handles. What it should NOT be used for.
-
-#### Prerequisites
-What must be true before starting. Tools, API keys, permissions, environment state.
-
-#### Step-by-Step Procedure
-Numbered steps. Each step should be:
-- Atomic (one logical action)
-- Specific (what to do, not just "do it right")
-- Executable (real commands, real API calls)
-
-#### Verification
-How to confirm the skill worked. Expected output, file changes, API responses.
-
-### 9.4 Recommended Sections
-
-#### Troubleshooting / Pitfalls
-Common failure modes and how to fix them. This is the most valuable section for complex skills.
-
-#### Examples
-Real examples with expected input and output.
-
-#### Variations
-Different approaches for different environments or constraints.
-
-### 9.5 Example: Complete Skill
-
-```markdown
----
-name: github-auth
-description: GitHub auth setup — HTTPS tokens, SSH keys, gh CLI login.
-category: github
-tags: [github, auth, ssh, token, cli]
-triggers: ["github auth", "gh auth", "setup github", "authenticate github"]
-related_skills: [github-pr-workflow, github-code-review]
+name: example-skill
+category: software-development
+description: What this skill does and when to use it
+tags: [debugging, python, testing]
 ---
 
-# GitHub Authentication
+# Example Skill
 
 ## When to Use
-Use when you need to authenticate with GitHub for any operation — pushing code,
-creating PRs, checking CI, or accessing private repos. Also use when auth is
-failing with "Authentication failed" or "Permission denied" errors.
+Describe the exact situation this skill handles.
 
 ## Prerequisites
-- `gh` CLI installed (`gh --version`)
-- Git installed (`git --version`)
-- A GitHub account
+What must be true before using this skill?
 
-## Step 1 — Check Current Auth Status
-```bash
-gh auth status
-```
-If already authenticated, this shows your account and token scope.
-If not authenticated, it prompts to log in.
+## Steps
 
-## Step 2 — HTTPS Token Auth (Recommended for most cases)
-```bash
-gh auth login --hostname github.com
-# Select: HTTPS (not SSH)
-# Browser: Yes (opens browser) or Token (paste manually)
-# Token: paste your GitHub PAT (Classic token, with repo scope)
-```
-
-**Token format:** `ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
-Needs `repo` scope for private repos, `workflow` scope for CI.
-
-## Step 3 — SSH Key Auth (For Git operations)
-```bash
-# Check for existing key
-ls ~/.ssh/id_*.pub
-
-# Generate new key if needed
-ssh-keygen -t ed25519 -C "your@email.com" -f ~/.ssh/github_ed25519
-
-# Add to GitHub
-# Settings → SSH and GPG keys → New SSH key → paste contents of github_ed25519.pub
-
-# Configure git to use SSH
-gh auth setup-git
-```
-
-## Step 4 — Verify Authentication
-```bash
-gh auth status
-gh api user
-```
-`gh auth status` should show "Logged in to github.com as <username>"
-`gh api user` should return your account JSON.
-
-## Step 5 — Store Credentials (Optional but Recommended)
-```bash
-# gh stores credentials by default in ~/.config/gh/hosts.yml
-# To use git credential helper:
-git config --global credential.helper store
-git config --global github.token YOUR_TOKEN_HERE
-```
+1. **Do X** — exact command or action
+2. **Then Y** — the next step
+3. **Finally Z** — completion check
 
 ## Verification
-Run:
-```bash
-gh repo list
-```
-Should return your repositories without error. If "Authentication failed",
-repeat Step 2 with a valid token.
+How do you know it worked?
 
-## Troubleshooting
-
-### "Permission denied (publickey)" on git push
-You used SSH auth but your key isn't added to GitHub. Go to GitHub →
-Settings → SSH keys → add your public key. Or switch to HTTPS:
-```bash
-git remote set-url origin https://github.com/username/repo.git
+## Pitfalls
+Common mistakes and how to avoid them.
 ```
 
-### Token works for `gh` but not for git operations
-Git needs the credential helper configured:
-```bash
-git config --global credential.helper store
-```
+### Frontmatter Fields
 
-### 2FA-enabled account
-Use OAuth device code flow, not password:
-```bash
-gh auth login --hostname github.com --web-based
-```
-Or create a Personal Access Token at github.com/settings/tokens.
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Skill identifier (kebab-case, max 64 chars) |
+| `category` | Yes | One of the 26 categories |
+| `description` | Yes | 1-2 sentences — used by skill-selector for matching |
+| `tags` | Recommended | Array of keywords — used for scoring |
 
-### Expired token
-Go to github.com/settings/tokens, generate a new token, update:
-```bash
-gh auth refresh --hostname github.com
-```
-Or re-run `gh auth login`.
-```
+### Good Skill Descriptions
+
+**Bad:** "Manages cron jobs."
+**Good:** "Create, monitor, pause, and resume Hermes Agent cron jobs. Includes schedule formats, delivery options, and state file patterns for multi-phase work."
+
+**Bad:** "GitHub tools."
+**Good:** "Full GitHub PR lifecycle: fetch diff, review code, post comments, check CI status, and merge. Works with gh CLI and GitHub REST API."
 
 ---
 
-## 10. Best Practices
+## 8. Limitations and Pitfalls
 
-### 10.1 Skill Naming
+### ⚠️ Cron Threat Scanning
 
-- **Lowercase, hyphens** — `github-auth`, `hermes-docker-workflow`, `morning-briefing`
-- **Descriptive** — `codi` is the agent, `code-ingestion` might be a skill about ingestion
-- **Consistent category** — match the category slug to the directory it lives in
+Skills containing `authorized_keys` trigger blocks in cron job context. The threat scanner flags SSH key management terms. Use paraphrases:
+- ❌ "authorized_keys file"
+- ✅ "SSH key file" or "key file" or "SSH authorized keys"
 
-### 10.2 Making Skills Auto-Load
+### ⚠️ No Mid-Session Reload
 
-Add `triggers` to the frontmatter. Triggers are phrases that cause the skill to load automatically:
+Editing or installing skills mid-session requires `/reset` for changes to take effect. The agent reads skills at session start only.
 
-```yaml
-triggers: ["github pr", "create a pull request", "check ci status"]
-```
+### ⚠️ Large Skills (>100KB)
 
-When your message matches these phrases, the skill loads automatically before Hermes processes your request.
+Always asks before auto-loading large skills. Use explicit `/skill large-skill-name` for these.
 
-### 10.3 Skill Dependencies
+### ⚠️ Category Conflicts
 
-Don't assume other skills are loaded. If your skill depends on `github-auth`, either:
-1. Include the prerequisite steps in your skill, or
-2. Document it clearly in the Prerequisites section
+Last-loaded wins in the same category. If you load two skills from the same category, the second overwrites the first's tool context. Check for overlapping skills before installing new ones.
 
-### 10.4 Keeping Skills Updated
+### ⚠️ Skills Are Procedures, Not Prompts
 
-Skills can become stale. If you find a skill producing wrong results:
-1. Check if the external tool/service has changed
-2. Update the skill with the correct procedure
-3. Test the updated skill
-4. Run `hermes skills check` to verify
+A bad procedure produces bad results. If a skill's steps are wrong, the output will be wrong. Always test new skills in throwaway sessions before relying on them.
 
-### 10.5 Skill Testing Checklist
+### ⚠️ Skills in Cron Contexts
 
-Before saving a skill:
-- [ ] Does the description accurately describe what it does?
-- [ ] Are the triggers specific enough to match the right input but not so broad they load randomly?
-- [ ] Are all commands real (not examples)?
-- [ ] Are there error handling steps in the Pitfalls section?
-- [ ] Does it have a Verification section?
-- [ ] Is it focused (one workflow, not multiple)?
-- [ ] Is the frontmatter complete (name, description, category)?
+`MEMORY.md` and user profile are NOT loaded in cron job contexts. Cron jobs only get the attached skills and their own prompt. If a cron job needs user preferences, include them in the prompt.
+
+### ⚠️ Skills Don't Persist /reset
+
+Explicitly loaded skills don't persist through `/reset`. If you always need a skill, add it to the `-s` flag or `startup_skills` in config.yaml.
 
 ---
 
-## 11. Skill Management
-
-### 11.1 Installed Skills Location
+## 9. Skill Management Commands
 
 ```bash
-# Host
-~/.hermes/skills/
+# Browse skill catalog (interactive)
+hermes skills browse
 
-# Container
-/opt/data/skills/
+# List all installed skills
+hermes skills list
+
+# Show skill info
+hermes skills info <skill-name>
+
+# Install from hub
+hermes skills install <skill-id>
+
+# Remove a skill
+hermes skills remove <skill-name>
+
+# Update (pull latest from hub)
+hermes skills update <skill-name>
+
+# Check skill health
+hermes skills doctor
+
+# View skill file directly
+cat ~/.hermes/skills/<skill-name>/SKILL.md
 ```
 
-Each skill is a directory containing a `SKILL.md` file (and optionally `references/`, `scripts/`, `assets/`).
+### Via WebUI
 
-### 11.2 Skill Sources
-
-Skills come from three sources:
-1. **Bundled** — comes with Hermes Agent in `~/.hermes/hermes-agent/skills/`
-2. **Hub-installed** — downloaded from the Hermes skill registry
-3. **Custom** — written by you or cloned from Git repos
-
-```bash
-# Add a GitHub repo as a skill source
-docker exec hermes /opt/hermes/.venv/bin/hermes skills tap add https://github.com/user/skill-repo
-```
-
-### 11.3 Skill Update
-
-```bash
-# Check for outdated skills
-docker exec hermes /opt/hermes/.venv/bin/hermes skills check
-
-# Update all outdated skills
-docker exec hermes /opt/hermes/.venv/bin/hermes skills update
-```
-
-### 11.4 Skill Permissions
-
-Skills must be readable by the Hermes user. If you get permission errors:
-```bash
-# Diagnose
-ls -la ~/.hermes/skills/
-
-# Fix
-sudo chown -R $(id -u):$(id -g) ~/.hermes/skills/
-```
-
-### 11.5 Skill Threat Scanning (Cron Jobs)
-
-The cron system scans skill content for suspicious strings. Trigger patterns include:
-- `authorized_keys` → SSH backdoor detection
-
-If a skill contains SSH tutorial content, either:
-1. Rephrase to avoid the trigger string (e.g., "SSH authorized keys file" instead of "authorized_keys")
-2. Don't attach the skill to a cron job
+- `/skills` — browse, filter, install, remove
+- Click any skill → see full content, readme, references
+- Risk badges on high-risk skills
+- Category filter + search
 
 ---
 
-## 12. Skill Limitations & Gotchas
+## Skill Naming Conventions
 
-### 12.1 Skill Content Scanned by Cron Threat Detection
+Skills follow kebab-case naming: `github-pr-workflow`, `morning-briefing`, `test-driven-development`.
 
-If attaching a skill to a cron job, the skill's content is scanned for threat patterns. `authorized_keys` in a skill will cause the cron job to fail with `RuntimeError: Potential cron threat detected`. Rephrase or remove the skill attachment.
-
-### 12.2 Skills Don't Auto-Reload Mid-Session
-
-Loading a skill with `/skill` makes it available for the current session. If you edit the skill file mid-session, Hermes won't pick up the changes until `/reset`.
-
-### 12.3 Skill Auto-Match Is Approximate
-
-The auto-match scorer is lightweight. Very similar skill descriptions may both match the same message, causing both to load. If you want precise control, use `/skill` explicitly.
-
-### 12.4 Skills Can Confict
-
-If two loaded skills give contradictory instructions for the same step, Hermes may follow one and ignore the other. When writing skills, check for overlap with existing skills in the same category.
-
-### 12.5 Large Skills Slow Down Context
-
-Each loaded skill contributes to the context window. Loading 10+ large skills on every message can eat into available tokens for your actual task. Use targeted loading via `/skill` rather than relying solely on auto-match for large skills.
-
-### 12.6 Skill Execution Is Mental, Not Mechanical
-
-Skills are read and followed by Hermes — they're not executed as code. A poorly written skill (ambiguous steps, missing error handling) produces unreliable results. Invest time in writing clear, numbered steps with verification.
-
-### 12.7 cronjob Tool Skills Attachment vs Slash Loading
-
-| | `skills: ["skill-name"]` in cronjob | `/skill skill-name` in chat |
-|-|-------------------------------------|------------------------------|
-| Scope | Job execution only | Session lifetime |
-| Timing | Loaded when job fires | Loaded immediately and persists |
-| Threat scan | Yes — scanned by cron threat detection | No scan |
-| Can fail | Yes — skill may be blocked by threat scan | No |
+When creating new skills, check the naming conventions:
+- Agents: `zoul`, `codi`, `coder` (agent names, short)
+- Workflows: `github-pr-workflow` (noun-verb)
+- Platforms: `huggingface-hub`, `notion-api` (platform-thing)
+- Categories: consistent with existing skills in the same category
 
 ---
 
-*For the Hermes Agent backend guide, see [HERMES-AGENT-GUIDE.md](./HERMES-AGENT-GUIDE.md). For the WebUI guide, see [HERMES-WEBUI-GUIDE.md](./HERMES-WEBUI-GUIDE.md). For container quick reference, see [HERMES_CHEATSHEET.md](./HERMES_CHEATSHEET.md).*
+## External Resources
+
+- **Skills Catalog:** [hermes-agent.nousresearch.com/docs/reference/skills-catalog](https://hermes-agent.nousresearch.com/docs/reference/skills-catalog)
+- **Skill Authoring Guide:** [hermes-agent.nousresearch.com/docs/user-guide/authoring-skills](https://hermes-agent.nousresearch.com/docs/user-guide/authoring-skills)
+- **Skills Hub (Nous):** [github.com/NousResearch/hermes-agent-skills](https://github.com/NousResearch/hermes-agent-skills)

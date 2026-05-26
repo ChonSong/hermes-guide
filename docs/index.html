@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hermes Ecosystem — Interactive Guide</title>
+    <title>Hermes Ecosystem — Complete Interactive Guide</title>
     <style>
         :root {
             --bg: #0d0d14;
@@ -24,9 +24,7 @@
             --shadow: 0 12px 60px rgba(0,0,0,0.7);
             --glow: 0 0 24px rgba(124,106,247,0.3);
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: var(--bg);
@@ -39,20 +37,17 @@
             -webkit-user-select: none;
             color: var(--text);
         }
-
-        /* ── MAIN CONTAINER ── */
         .slideshow-container {
             width: 92vw;
-            max-width: 1100px;
-            height: 78vh;
-            max-height: 720px;
+            max-width: 1200px;
+            height: 82vh;
+            max-height: 800px;
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 18px;
+            gap: 14px;
         }
-
         /* ── HEADER BAR ── */
         .top-bar {
             width: 100%;
@@ -61,19 +56,24 @@
             justify-content: space-between;
             padding: 0 4px;
         }
-        .top-bar .brand {
+        .top-bar .brand { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+        .top-bar .section-label { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.05em; }
+        .top-bar .slide-counter { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.05em; }
+        /* ── FULLSCREEN TOGGLE ── */
+        .fullscreen-btn {
+            background: var(--btn-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 5px 12px;
             font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: var(--accent);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
-        .top-bar .section-label {
-            font-size: 0.7rem;
-            color: var(--muted);
-            letter-spacing: 0.05em;
-        }
-
+        .fullscreen-btn:hover { background: var(--btn-hover); border-color: var(--accent); }
         /* ── SLIDE AREA ── */
         .slide-wrapper {
             width: 100%;
@@ -85,7 +85,25 @@
             background: var(--slide-bg);
             border: 1px solid var(--border);
         }
-
+        /* ── FULLSCREEN MODE ── */
+        body.is-fullscreen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 9999;
+        }
+        body.is-fullscreen .slideshow-container {
+            width: 100vw;
+            height: 100vh;
+            max-width: 100vw;
+            max-height: 100vh;
+            border-radius: 0;
+        }
+        body.is-fullscreen .top-bar,
+        body.is-fullscreen .controls,
+        body.is-fullscreen .hint,
+        body.is-fullscreen .accent-bar { display: none; }
+        body.is-fullscreen .slide-wrapper { border-radius: 0; border: none; }
+        body.is-fullscreen .slide { border-radius: 0; }
         /* ── INDIVIDUAL SLIDES ── */
         .slide {
             position: absolute;
@@ -95,99 +113,64 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 40px 56px;
+            padding: 36px 52px;
             background: var(--slide-bg);
             opacity: 0;
             transform: translateX(60px);
-            transition: opacity 0.45s cubic-bezier(0.4,0,0.2,1),
-                        transform 0.45s cubic-bezier(0.4,0,0.2,1);
+            transition: opacity 0.4s cubic-bezier(0.4,0,0.2,1), transform 0.4s cubic-bezier(0.4,0,0.2,1);
             pointer-events: none;
             border-radius: 18px;
             overflow: hidden;
         }
-
-        .slide.active {
-            opacity: 1;
-            transform: translateX(0);
-            pointer-events: all;
-            z-index: 2;
-        }
-
-        .slide.exit-left {
-            opacity: 0;
-            transform: translateX(-60px);
-        }
-
-        .slide.exit-right {
-            opacity: 0;
-            transform: translateX(60px);
-        }
-
+        .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; z-index: 2; }
+        .slide.exit-left { opacity: 0; transform: translateX(-60px); }
+        .slide.exit-right { opacity: 0; transform: translateX(60px); }
         /* ── TYPOGRAPHY ── */
         .slide-title {
-            font-size: 2.2rem;
+            font-size: 2rem;
             font-weight: 800;
             color: #fff;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             outline: none;
             border-bottom: 3px solid transparent;
-            padding: 6px 18px;
+            padding: 4px 16px;
             border-radius: 8px;
             transition: border-color 0.2s, background 0.2s;
             cursor: text;
             line-height: 1.25;
             letter-spacing: -0.02em;
+            max-width: 900px;
         }
-
-        .slide-title:focus {
-            border-bottom-color: var(--accent);
-            background: rgba(124,106,247,0.06);
-        }
+        .slide-title:focus { border-bottom-color: var(--accent); background: rgba(124,106,247,0.06); }
         .slide-title:hover { background: rgba(255,255,255,0.03); }
-
         .slide-subtitle {
-            font-size: 1rem;
+            font-size: 0.95rem;
             color: var(--subtext);
             text-align: center;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             font-weight: 400;
             letter-spacing: 0.02em;
         }
-
         /* ── BODY CONTENT ── */
         .slide-body {
-            font-size: 1.05rem;
+            font-size: 1rem;
             color: var(--subtext);
             text-align: center;
-            max-width: 680px;
+            max-width: 660px;
             outline: none;
-            padding: 10px 18px;
+            padding: 8px 16px;
             border-radius: 8px;
             border: 2px solid transparent;
             transition: border-color 0.2s, background 0.2s;
             cursor: text;
             line-height: 1.75;
-            min-height: 36px;
+            min-height: 32px;
         }
-
-        .slide-body:focus {
-            border-color: rgba(124,106,247,0.45);
-            background: rgba(124,106,247,0.04);
-        }
+        .slide-body:focus { border-color: rgba(124,106,247,0.45); background: rgba(124,106,247,0.04); }
         .slide-body:hover { background: rgba(255,255,255,0.02); }
-
-        .slide-body.left-align { text-align: left; max-width: 760px; }
-
-        /* ── ACCENT DIVIDER ── */
-        .accent-bar {
-            width: 52px; height: 4px;
-            background: linear-gradient(90deg, var(--accent), var(--accent-2));
-            border-radius: 2px;
-            margin: 8px auto 4px;
-        }
-
-        /* ── BADGE / CHIP ── */
+        .slide-body.left-align { text-align: left; max-width: 780px; }
+        /* ── BADGE ── */
         .badge {
             display: inline-block;
             background: rgba(124,106,247,0.15);
@@ -195,241 +178,139 @@
             color: var(--accent);
             border-radius: 20px;
             padding: 3px 12px;
-            font-size: 0.72rem;
+            font-size: 0.68rem;
             font-weight: 600;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
-
         .badge.teal { background: rgba(78,201,176,0.12); border-color: rgba(78,201,176,0.3); color: var(--accent-2); }
         .badge.red  { background: rgba(255,107,107,0.12); border-color: rgba(255,107,107,0.3); color: var(--accent-3); }
-        .badge.gold { background: rgba(249,199,79,0.12);  border-color: rgba(249,199,79,0.3);  color: var(--accent-4); }
-
-        /* ── GRID CONTENT ── */
+        .badge.gold { background: rgba(249,199,79,0.12); border-color: rgba(249,199,79,0.3); color: var(--accent-4); }
+        .badge.green { background: rgba(107,203,119,0.12); border-color: rgba(107,203,119,0.3); color: #6bcb77; }
+        /* ── GRID ── */
         .content-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             width: 100%;
-            max-width: 780px;
+            max-width: 800px;
             text-align: left;
-            margin-top: 6px;
+            margin-top: 4px;
         }
-
         .grid-card {
             background: rgba(255,255,255,0.04);
             border: 1px solid var(--border);
             border-radius: 10px;
-            padding: 12px 16px;
+            padding: 11px 15px;
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
-
-        .grid-card .card-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .grid-card .card-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .grid-card .card-desc {
-            font-size: 0.8rem;
-            color: var(--subtext);
-            line-height: 1.5;
-        }
-
-        /* ── BIG NUMBER / STAT ── */
-        .stat-row {
-            display: flex;
-            gap: 28px;
-            justify-content: center;
-            margin-top: 10px;
-        }
-
+        .grid-card .card-title { font-size: 0.82rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px; }
+        .grid-card .card-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .grid-card .card-desc { font-size: 0.78rem; color: var(--subtext); line-height: 1.5; }
+        .grid-card .card-link { font-size: 0.72rem; color: var(--accent); text-decoration: none; margin-top: 2px; }
+        .grid-card .card-link:hover { text-decoration: underline; }
+        /* ── STAT ROW ── */
+        .stat-row { display: flex; gap: 32px; justify-content: center; margin-top: 8px; }
         .stat-item { text-align: center; }
-        .stat-num {
-            font-size: 2.6rem;
-            font-weight: 900;
-            letter-spacing: -0.04em;
-            line-height: 1;
-            background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .stat-label {
-            font-size: 0.72rem;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-top: 4px;
-        }
-
-        /* ── IFRAME SLIDE ── */
-        .slide iframe.graph-embed {
-            width: 100%;
-            height: 100%;
-            border: none;
-            border-radius: 12px;
-            background: var(--bg);
-        }
-
+        .stat-num { font-size: 2.4rem; font-weight: 900; letter-spacing: -0.04em; line-height: 1; background: linear-gradient(135deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .stat-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
         /* ── FEATURE LIST ── */
-        .feature-list {
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-            width: 100%;
-            max-width: 720px;
-            margin-top: 4px;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 14px;
-            font-size: 0.88rem;
-            color: var(--text);
-            text-align: left;
-        }
-
-        .feature-item .feat-icon {
-            font-size: 0.9rem;
-            flex-shrink: 0;
-            margin-top: 1px;
-        }
-
+        .feature-list { display: flex; flex-direction: column; gap: 7px; width: 100%; max-width: 740px; margin-top: 4px; }
+        .feature-item { display: flex; align-items: flex-start; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px; font-size: 0.85rem; color: var(--text); text-align: left; }
+        .feature-item .feat-icon { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
         .feature-item .feat-text { flex: 1; line-height: 1.5; }
         .feature-item .feat-text strong { color: #fff; font-weight: 600; }
-
-        /* ── SLIDE NUMBER ── */
-        .slide-number {
-            position: absolute;
-            top: 16px; right: 24px;
-            font-size: 0.75rem;
-            color: rgba(255,255,255,0.25);
-            font-weight: 500;
-            letter-spacing: 0.5px;
-        }
-
+        /* ── ASCII ART / DIAGRAM ── */
+        .ascii-art { font-family: 'Courier New', monospace; font-size: 0.7rem; color: var(--accent-2); line-height: 1.4; text-align: left; white-space: pre; background: rgba(78,201,176,0.05); border: 1px solid rgba(78,201,176,0.15); border-radius: 10px; padding: 14px 18px; }
+        .ascii-art .label { color: var(--accent-4); font-weight: bold; }
+        .ascii-art .value { color: var(--text); }
+        .ascii-art .dim { color: var(--muted); }
+        /* ── IMAGE SLIDE ── */
+        .slide-img { max-width: 90%; max-height: 65%; object-fit: contain; border-radius: 10px; border: 1px solid var(--border); }
+        .img-caption { font-size: 0.75rem; color: var(--muted); margin-top: 6px; text-align: center; }
+        /* ── IFRAME ── */
+        .slide iframe.graph-embed { width: 100%; height: 100%; border: none; border-radius: 12px; background: var(--bg); }
         /* ── SECTION TAG ── */
         .section-tag {
             position: absolute;
-            top: 16px; left: 24px;
-            font-size: 0.65rem;
+            top: 14px;
+            left: 18px;
+            font-size: 0.62rem;
             font-weight: 700;
-            letter-spacing: 0.15em;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
             color: var(--muted);
-            padding: 3px 8px;
+            background: rgba(255,255,255,0.04);
             border: 1px solid var(--border);
             border-radius: 4px;
+            padding: 3px 8px;
         }
-
+        /* ── SLIDE NUMBER ── */
+        .slide-number { position: absolute; top: 14px; right: 18px; font-size: 0.65rem; color: var(--muted); }
+        /* ── ACCENT DIVIDER ── */
+        .accent-bar { width: 52px; height: 4px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 2px; margin: 0 auto; }
         /* ── CONTROLS ── */
-        .controls {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .btn {
-            width: 40px; height: 40px;
-            border-radius: 50%;
-            border: 2px solid var(--border);
-            background: var(--btn-bg);
-            color: var(--text);
-            cursor: pointer;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
+        .controls { display: flex; gap: 10px; align-items: center; }
+        .btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border); background: var(--btn-bg); color: var(--text); cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
         .btn:hover { background: var(--btn-hover); border-color: #5555aa; transform: scale(1.06); }
         .btn:active { transform: scale(0.93); }
         .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-
-        .btn.add  { background: #1a2e1a; border-color: #3a6a3a; font-size: 1.4rem; }
-        .btn.add:hover { background: #2a4a2a; }
-        .btn.del  { background: #2a1a1a; border-color: #6a3a3a; font-size: 1rem; }
-        .btn.del:hover { background: #4a2a2a; }
-        .btn.rst  { width: auto; border-radius: 20px; padding: 0 14px; font-size: 0.8rem; background: #222; border-color: #444; }
-        .btn.rst:hover { background: #333; }
-
+        .btn.rst { width: auto; border-radius: 20px; padding: 0 14px; font-size: 0.8rem; background: #222; border-color: #444; }
         .indicators { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; justify-content: center; }
-        .dot {
-            width: 9px; height: 9px;
-            border-radius: 50%;
-            background: var(--indicator);
-            cursor: pointer;
-            transition: all 0.25s;
-            border: none;
-        }
+        .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--indicator); cursor: pointer; transition: all 0.25s; border: none; }
         .dot:hover { background: #888; transform: scale(1.35); }
-        .dot.active-dot {
-            background: var(--indicator-active);
-            width: 12px; height: 12px;
-            box-shadow: 0 0 10px rgba(124,106,247,0.55);
-        }
-
-        .hint {
-            color: rgba(255,255,255,0.28);
-            font-size: 0.75rem;
-            text-align: center;
-            letter-spacing: 0.3px;
-        }
-        .hint kbd {
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.18);
-            border-radius: 4px;
-            padding: 2px 6px;
-            font-family: inherit;
-            font-size: 0.7rem;
-            margin: 0 1px;
-        }
-
+        .dot.active-dot { background: var(--indicator-active); width: 12px; height: 12px; box-shadow: 0 0 10px rgba(124,106,247,0.55); }
+        /* ── HINT ── */
+        .hint { color: rgba(255,255,255,0.28); font-size: 0.72rem; text-align: center; letter-spacing: 0.3px; }
+        .hint kbd { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); border-radius: 4px; padding: 2px 6px; font-family: inherit; font-size: 0.68rem; margin: 0 1px; }
+        /* ── WORKFLOW BOX ── */
+        .workflow-box { background: rgba(124,106,247,0.08); border: 1px solid rgba(124,106,247,0.25); border-radius: 12px; padding: 16px 20px; text-align: left; max-width: 760px; }
+        .workflow-step { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; font-size: 0.85rem; }
+        .step-num { background: var(--accent); color: #fff; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
+        .step-text { color: var(--subtext); line-height: 1.5; }
+        .step-text strong { color: var(--text); }
+        /* ── LINK BUTTON ── */
+        .link-btn { display: inline-block; background: rgba(124,106,247,0.12); border: 1px solid rgba(124,106,247,0.35); color: var(--accent); border-radius: 8px; padding: 6px 14px; font-size: 0.78rem; text-decoration: none; transition: all 0.2s; margin: 3px; }
+        .link-btn:hover { background: rgba(124,106,247,0.25); border-color: var(--accent); }
+        /* ── CATEGORY TAG ROW ── */
+        .cat-tags { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; max-width: 700px; }
+        .cat-tag { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 6px; padding: 3px 9px; font-size: 0.68rem; color: var(--subtext); }
+        /* ── CODE BLOCK ── */
+        .code-block { font-family: 'Courier New', monospace; font-size: 0.75rem; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; color: var(--accent-2); text-align: left; white-space: pre; max-width: 700px; overflow-x: auto; }
+        /* ── THREE COLUMN ── */
+        .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; max-width: 900px; }
+        .three-col .col-card { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: left; }
+        .three-col .col-title { font-size: 0.8rem; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+        .three-col .col-item { font-size: 0.75rem; color: var(--subtext); padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
         /* ── RESPONSIVE ── */
         @media (max-width: 700px) {
             .slideshow-container { width: 96vw; height: 65vh; }
-            .slide { padding: 28px 20px; }
-            .slide-title { font-size: 1.5rem; }
-            .slide-body { font-size: 0.9rem; }
+            .slide { padding: 24px 18px; }
+            .slide-title { font-size: 1.4rem; }
+            .slide-body { font-size: 0.88rem; }
             .content-grid { grid-template-columns: 1fr; }
             .stat-row { gap: 18px; }
             .stat-num { font-size: 2rem; }
+            .three-col { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
 <div class="slideshow-container" id="slideshowContainer">
-
     <div class="top-bar">
-        <span class="brand">Hermes Ecosystem</span>
+        <span class="brand">Hermes Ecosystem Guide</span>
         <span class="section-label" id="sectionLabel">Overview</span>
+        <div style="display:flex;gap:8px;align-items:center">
+            <span class="slide-counter" id="slideCounter">1 / 34</span>
+            <button class="fullscreen-btn" id="fullscreenBtn" title="Toggle fullscreen (F)">⛶ Fullscreen</button>
+        </div>
     </div>
 
-    <div class="slide-wrapper" id="slideWrapper">
-        <!-- Slides injected by JS -->
-    </div>
+    <div class="slide-wrapper" id="slideWrapper"></div>
 
     <div class="accent-bar"></div>
 
@@ -437,242 +318,438 @@
         <button class="btn" id="prevBtn" title="Previous" aria-label="Previous">◀</button>
         <div class="indicators" id="indicators"></div>
         <button class="btn" id="nextBtn" title="Next" aria-label="Next">▶</button>
-        <button class="btn add" id="addBtn" title="Add slide" aria-label="Add">+</button>
-        <button class="btn del" id="deleteBtn" title="Delete slide" aria-label="Delete">🗑</button>
-        <button class="btn rst" id="resetBtn" title="Reset">↺ Reset</button>
     </div>
 
     <div class="hint">
-        <kbd>Space</kbd> next &nbsp;|&nbsp; <kbd>Shift</kbd>+<kbd>Space</kbd> prev &nbsp;|&nbsp; <kbd>←</kbd><kbd>→</kbd> nav &nbsp;|&nbsp; click text to edit
+        <kbd>Space</kbd> next &nbsp;|&nbsp; <kbd>←</kbd><kbd>→</kbd> nav &nbsp;|&nbsp; <kbd>F</kbd> fullscreen &nbsp;|&nbsp; <kbd>E</kbd> edit text &nbsp;|&nbsp; swipe on mobile
     </div>
 </div>
 
 <script>
 (function() {
     // ─────────────────────────────────────────────────────
-    //  SLIDE DATA
+    //  SLIDE DATA — 34 slides, all sections covered
     // ─────────────────────────────────────────────────────
     const defaultSlides = [
+        // ── OVERVIEW ──────────────────────────────────────
         {
-            section: "Overview",
-            title: "The Hermes Ecosystem",
-            subtitle: "Your autonomous AI agent stack",
-            body: "Three interconnected systems — Agent, WebUI, and Skills — powered by 20+ LLM providers, running 24/7 as cron jobs, messaging bots, and a browser workspace.",
+            section: "Overview", title: "The Hermes Ecosystem",
+            subtitle: "Your autonomous AI agent stack — running 24/7",
+            body: "Three interconnected systems — Agent, WebUI, and Skills — powered by 20+ LLM providers. Cron jobs handle overnight work, messaging bots run on Discord and Telegram, and the browser workspace gives you full visual control.",
             badge: "v2.x",
         },
         {
-            section: "Overview",
-            title: "147 Skills Across 25 Categories",
-            subtitle: "Growing with every session",
+            section: "Overview", title: "146 Skills · 26 Categories · 1 Unified System",
+            subtitle: "Self-improving agent that gets better with every session",
             body: "",
             stats: [
-                { n: "147", l: "Skills" },
-                { n: "25",  l: "Categories" },
-                { n: "20+", l: "LLM Providers" },
-                { n: "3",   l: "Interfaces" },
+                { n: "146", l: "Skills" }, { n: "26", l: "Categories" },
+                { n: "20+", l: "LLM Providers" }, { n: "3", l: "Interfaces" },
+                { n: "∞", l: "Sessions" },
             ],
         },
         {
-            section: "Overview",
-            title: "Three Ways to Talk to Hermes",
+            section: "Overview", title: "How It All Connects",
+            subtitle: "The big picture — every piece explained",
+            body: "",
+            ascii: `┌─────────────────────────────────────────────────────────┐
+│                    YOU (Human)                         │
+└────────────────┬──────────────────────────────────────┘
+                 │
+     ┌───────────┼────────────────┐
+     ▼           ▼                ▼
+┌─────────┐  ┌────────┐    ┌──────────┐
+│  WebUI  │  │  CLI   │    │ Discord/  │
+│ :9119   │  │ chat   │    │ Telegram  │
+└────┬────┘  └───┬────┘    └─────┬────┘
+     │            │              │
+     └────────────┼──────────────┘
+                  ▼
+         ┌────────────────┐
+         │  Hermes Agent  │ ◄── skills auto-load
+         │   Gateway      │ ◄── cron jobs (24/7)
+         │   :8642        │ ◄── /goal loop
+         └────┬──────┬────┘
+              ▼      ▼
+     ┌──────────┐  ┌──────────┐
+     │ Terminal │  │ File/Session │
+     │ Tools    │  │ Memory       │
+     └──────────┘  └──────────┘`
+        },
+        {
+            section: "Overview", title: "Three Ways to Talk to Hermes",
             subtitle: "Pick the right interface for the job",
             body: "",
             grid: [
-                { title: "CLI / TUI", dot: "#7c6af7", desc: "Interactive terminal — rich Ink/React UI with slash commands, autocomplete, real-time streaming" },
-                { title: "WebUI", dot: "#4ec9b0", desc: "Browser workspace at :9119 — chat, files, terminal, skills browser, memory, cron jobs" },
-                { title: "Messaging Bots", dot: "#f9c74f", desc: "Telegram + Discord simultaneously — runs 24/7 as a bot, no browser needed" },
+                { title: "WebUI (Browser)", dot: "#7c6af7", desc: "Full workspace at :9119 — chat, files, terminal, skills browser, memory, cron jobs, dashboard. Installable as PWA for mobile." },
+                { title: "CLI / TUI", dot: "#4ec9b0", desc: "Interactive terminal — rich Ink/React UI, slash commands, autocomplete, real-time streaming. SSH in and go." },
+                { title: "Messaging Bots", dot: "#f9c74f", desc: "Discord + Telegram simultaneously — async, on-the-go, 24/7 running as a bot. Voice messages auto-transcribed." },
             ],
         },
+        // ── AGENT GUIDE ──────────────────────────────────
         {
-            section: "Agent Guide",
-            title: "How the Agent Loop Works",
-            subtitle: "The core engine — tool calls, memory, and iteration",
-            body: "Your message goes to an LLM with a list of available tools. The model can respond with text or request tool calls. Each tool execution feeds results back as a new message. The loop repeats until the model gives a plain text response.",
-            badge: "hermes-agent guide",
+            section: "Agent Guide", title: "What Hermes Agent Actually Does",
+            subtitle: "Tool-calling, iteration, and memory — all in one loop",
+            body: "Your message goes to an LLM with a list of available tools. The model can respond with text OR request tool calls (read file, run command, search web, etc.). Each tool result feeds back as a new message. The loop repeats until the model gives a plain text reply — then you get the result.",
+            badge: "hermes-agent", badgeStyle: "teal",
         },
         {
-            section: "Agent Guide",
-            title: "Sessions — Fork, Resume, Prune",
-            subtitle: "Full conversation history with branching",
-            body: "Every conversation is stored as an indexed session. Fork a session to try changes without losing the original. Resume by name or ID. Prune old sessions regularly — session files accumulate fast with frequent cron jobs.",
-            badge: "hermes-agent guide",
-        },
-        {
-            section: "Agent Guide",
-            title: "Persistent Memory",
-            subtitle: "Three-tier memory system",
-            body: "<strong>SOUL.md</strong> — agent personality and core principles (always loaded)<br><strong>MEMORY.md</strong> — curated long-term facts about you and your environment<br><strong>memory/YYYY-MM-DD.md</strong> — daily session logs, searchable across sessions",
-            badge: "hermes-agent guide",
-        },
-        {
-            section: "Agent Guide",
-            title: "Cron Jobs — The Autonomous Engine",
-            subtitle: "Multi-phase work that runs while you sleep",
-            body: "Schedule complex workflows as cron jobs. Chain phases with state files. Deliver to Discord, Telegram, or local files. The <code>autonomous-cron-pipeline</code> skill handles multi-phase projects — decomposes, executes, verifies, and repeats.",
-            badge: "hermes-agent guide",
-            badgeStyle: "teal",
-        },
-        {
-            section: "Agent Guide",
-            title: "Delegation — Multi-Agent Orchestration",
-            subtitle: "When one agent isn't enough",
-            body: "<strong>delegate_task</strong> — spawns parallel subagents within a session (quick parallel work)<br><strong>tmux spawning</strong> — long-lived autonomous missions that outlive the parent session<br><strong>Swarm mode</strong> — persistent tmux workers with role-based dispatch, kanban, and byte-verified review gates",
-            badge: "hermes-agent guide",
-        },
-        {
-            section: "Agent Guide",
-            title: "Key Gotchas",
-            subtitle: "Things that trip people up",
+            section: "Agent Guide", title: "The Agent Loop — Step by Step",
+            subtitle: "How a single turn flows through the system",
             body: "",
+            ascii: `┌──────────────────────────────────────────────────────────┐
+│  1. YOU send message                                      │
+└────────────────────────┬───────────────────────────────────┘
+                         ▼
+┌──────────────────────────────────────────────────────────┐
+│  2. System prompt + memory injected (SOUL, MEMORY, skills)│
+└────────────────────────┬───────────────────────────────────┘
+                         ▼
+┌──────────────────────────────────────────────────────────┐
+│  3. LLM decides: TEXT RESPONSE  or  TOOL CALL             │
+│                        │                  │              │
+│                   Return to you     Execute tool(s)       │
+│                                        │                 │
+│                                    Feed results          │
+│                                    back as new           │
+│                                    message → step 3     │
+└──────────────────────────────────────────────────────────┘
+                         ▼
+              4. Plain text returned to you`
+        },
+        {
+            section: "Agent Guide", title: "Sessions — The Backbone of Continuity",
+            subtitle: "Every conversation stored, indexed, forkable",
+            body: "Every conversation lives as an indexed session. You can fork (branch) a session to try something risky without losing the original. Resume by name, ID, or date. Sessions accumulate fast with cron jobs — prune old ones regularly with <code>hermes sessions prune</code>.",
+            badge: "hermes-agent", badgeStyle: "teal",
             features: [
-                { icon: "⚡", text: "<strong>Tool changes require /reset</strong> — editing config.yaml mid-session doesn't reload tools until you start a new session" },
-                { icon: "🔑", text: "<strong>Discord needs numeric user IDs</strong> — not usernames. Settings → Advanced → Developer Mode → right-click user → Copy User ID" },
-                { icon: "📁", text: "<strong>~/workspace not mounted in container</strong> — use /opt/data/hermes-sync/scripts/ for git-synced scripts, /opt/data/ for output" },
-                { icon: "🔁", text: "<strong>Iteration limit (max_turns)</strong> — default 90. Long debugging sessions hit it. Set agent.max_turns: 200 in config" },
+                { icon: "🍴", text: "<strong>/fork (or /branch)</strong> — branch a session to experiment without losing the original" },
+                { icon: "▶️", text: "<strong>/resume [name]</strong> — pick up any past session exactly where it left off" },
+                { icon: "🗑", text: "<strong>hermes sessions prune --older-than 7</strong> — clean up old sessions, reclaim disk space" },
+                { icon: "📋", text: "<strong>hermes sessions list</strong> — see all sessions with their IDs and last-active dates" },
             ],
         },
         {
-            section: "Agent Guide",
-            title: "Configuration Reference",
-            subtitle: "Essential config.yaml paths and settings",
-            body: "<strong>Config:</strong> ~/.hermes/config.yaml<br><strong>API keys:</strong> ~/.hermes/.env<br><strong>Skills:</strong> ~/.hermes/skills/<br><strong>Sessions:</strong> ~/.hermes/sessions/<br><strong>Logs:</strong> ~/.hermes/logs/agent.log",
-            badge: "hermes-agent guide",
+            section: "Agent Guide", title: "Memory — Three-Tier Architecture",
+            subtitle: "SOUL → MEMORY → daily logs — each with a different role",
+            body: "",
+            threeCol: [
+                { title: "SOUL.md", items: ["Agent personality & values", "Always loaded first", "Never asks questions", "Defines 'be genuinely helpful'"], desc: "Who Hermes IS" },
+                { title: "MEMORY.md", items: ["Curated long-term facts", "User preferences", "Environment details", "Loaded in main sessions only"], desc: "What Hermes KNOWS" },
+                { title: "memory/ (daily)", items: ["Raw session logs", "YYYY-MM-DD format", "Searchable via session_search", "Distilled into MEMORY.md"], desc: "What happened WHEN" },
+            ],
         },
         {
-            section: "WebUI Guide",
-            title: "Hermes WebUI — Your Command Center",
-            subtitle: "Browser-based workspace, installable as PWA",
-            body: "Chat, files, terminal, memory, skills, cron jobs, and dashboard — all in one responsive web app. Connects to Hermes Agent gateway at port 8642. Supports Tailscale for zero-config remote access.",
-            badge: "hermes-webui guide",
-            badgeStyle: "teal",
+            section: "Agent Guide", title: "Cron Jobs — Your Autonomous Engine",
+            subtitle: "Complex workflows that run while you sleep",
+            body: "Schedule anything as a cron job — morning briefings, code reviews, data pipelines, multi-phase migrations. Chain phases with state files (PHASE_TRACKER.json). Deliver output to Discord, Telegram, or local files. The <code>autonomous-cron-pipeline</code> skill handles multi-phase projects with decompression → execution → verification → repeat.",
+            badge: "hermes-agent", badgeStyle: "teal",
+            features: [
+                { icon: "⏰", text: "<strong>30m</strong> — every 30 minutes (health checks, monitors)" },
+                { icon: "📅", text: "<strong>0 8 * * MON-FRI</strong> — daily at 8am Mon-Fri (morning briefing)" },
+                { icon: "🔗", text: "<strong>State files</strong> — PHASE_TRACKER.json chains phases across cron ticks" },
+                { icon: "📮", text: "<strong>deliver: origin</strong> — push output to the creating session" },
+            ],
         },
         {
-            section: "WebUI Guide",
-            title: "Chat Interface",
-            subtitle: "Enhanced Claude mode vs Portable mode",
-            body: "<strong>Enhanced Claude</strong> — full session API via gateway. Persistent history, skill loading, all tools, streaming. <strong>Portable</strong> — OpenAI-compatible /v1/chat/completions. No sessions, no skills, no memory. Use for Ollama/LM Studio/local models.",
-            badge: "hermes-webui guide",
-            badgeStyle: "teal",
+            section: "Agent Guide", title: "Morning Briefing Workflow",
+            subtitle: "A complete end-to-end automation example",
+            body: "",
+            workflow: [
+                { n: "1", t: "Schedule: <code>0 8 * * MON-FRI</code> with <code>skills=[morning-briefing]</code>" },
+                { n: "2", t: "Job fires → loads <code>morning-briefing</code> skill → reads your email (Gmail API)" },
+                { n: "3", t: "Checks Google Calendar via <code>gcalcli</code> for today's meetings" },
+                { n: "4", t: "Fetches weather via OpenWeatherMap API" },
+                { n: "5", t: "Synthesizes a briefing: <em>'Good morning Sean — 2 meetings today, rain expected at 2pm, one urgent email from X.'</em>" },
+                { n: "6", t: "Delivers to Discord via <code>send_message</code> → your #daily channel" },
+            ],
         },
         {
-            section: "WebUI Guide",
-            title: "Skills Browser — /skills",
-            subtitle: "Browse, install, and load from 2,000+ skills",
-            body: "Three tabs: Installed (your skills), Marketplace (all catalog skills), Featured (curated groups). Filter by category, risk level, search by name/description/tags. Security risk badges on every skill — review before installing high-risk skills.",
-            badge: "hermes-webui guide",
-            badgeStyle: "teal",
+            section: "Agent Guide", title: "Code Review Workflow",
+            subtitle: "Full lifecycle: branch → code → review → merge",
+            body: "",
+            workflow: [
+                { n: "1", t: "<strong>hermes chat -q</strong> \"Review PR #47 in ChonSong/agent-os\" with <code>-s github-pr-workflow</code>" },
+                { n: "2", t: "Loads <code>github-pr-workflow</code> skill → fetches PR diff via <code>gh pr diff #47</code>" },
+                { n: "3", t: "Reads changed files, analyzes code quality, checks for security issues" },
+                { n: "4", t: "Posts review comments via <code>gh pr comment #47</code> with specific line feedback" },
+                { n: "5", t: "Checks CI status via <code>gh pr checks #47</code> — waits if pending" },
+                { n: "6", t: "If all green: <code>gh pr merge #47</code> — if not, summarizes failures for you" },
+            ],
         },
         {
-            section: "WebUI Guide",
-            title: "Jobs, Memory & Dashboard",
-            subtitle: "Full management UIs",
-            body: "<strong>/jobs</strong> — create, monitor, pause, resume cron jobs. Output viewer per job.<br><strong>/memory</strong> — browse, search, edit MEMORY.md and daily logs directly.<br><strong>/dashboard</strong> — session count, model mix, cost ledger, attention card.",
-            badge: "hermes-webui guide",
-            badgeStyle: "teal",
-        },
-        {
-            section: "WebUI Guide",
-            title: "Swarm Mode — Multi-Agent Control Plane",
-            subtitle: "Live orchestration of multiple agents",
-            body: "Unlimited Hermes workers with 1 orchestrator. Role-based dispatch (builders, reviewers, QA, ops). Persistent tmux sessions. Kanban board with backlog → review → done lanes. Byte-verified review gate before handoff.",
-            badge: "hermes-webui guide",
-            badgeStyle: "teal",
-        },
-        {
-            section: "Skills Guide",
-            title: "What Skills Are",
-            subtitle: "Hermes's self-improvement system",
-            body: "Skills are Markdown procedure documents (.md files) that Hermes loads when relevant. Unlike one-shot prompts, skills encode reusable, tested workflows — the agent gets better at your specific environment with every session.",
-            badge: "hermes-skills guide",
-            badgeStyle: "gold",
-        },
-        {
-            section: "Skills Guide",
-            title: "How Skills Load",
-            subtitle: "Three ways to get a skill active",
-            body: "<strong>Auto-match</strong> — skill triggers (keywords in message) are scored against your input every turn. Matching skills load silently.<br><strong>/skill name</strong> — explicit load during chat, current session only.<br><strong>-s flag</strong> — preload at startup: hermes -s github-auth,coder",
-            badge: "hermes-skills guide",
-            badgeStyle: "gold",
-        },
-        {
-            section: "Skills Guide",
-            title: "Skill Categories",
-            subtitle: "Where each skill lives",
-            body: "agents · autonomous-ai-agents · autonomous-cron-pipeline · creative · data-science · devops · github · hermes · hermes-computer · mcp · media · mlops · note-taking · planning · productivity · red-teaming · repo-transmute · research · smart-home · social-media · software-development",
-            badge: "hermes-skills guide",
-            badgeStyle: "gold",
-        },
-        {
-            section: "Skills Guide",
-            title: "Core Skills to Know",
-            subtitle: "Start here",
+            section: "Agent Guide", title: "Delegation — When One Agent Isn't Enough",
+            subtitle: "Three patterns for multi-agent work",
             body: "",
             grid: [
-                { title: "hermes-agent", dot: "#7c6af7", desc: "The complete CLI/config reference. Load when anything isn't working." },
-                { title: "autonomous-cron-pipeline", dot: "#ff6b6b", desc: "Multi-phase projects via chained cron jobs with state files." },
-                { title: "github-pr-workflow", dot: "#6bcb77", desc: "Full PR lifecycle — branch, commit, open, CI check, merge." },
-                { title: "morning-briefing", dot: "#4ec9b0", desc: "Daily news + weather + calendar summary. Schedule Mon-Fri 8am." },
-                { title: "coder / reviewer", dot: "#f9c74f", desc: "Code generation and quality assurance — use together for full TDD." },
-                { title: "repo-transmute", dot: "#a29bfe", desc: "Vision-driven codebase migration — AST extraction + LLM + verification." },
+                { title: "delegate_task", dot: "#7c6af7", desc: "Spawns parallel subagents within a session. Fast, bounded, shared context. Use for quick parallel subtasks — research A + research B simultaneously." },
+                { title: "tmux spawning", dot: "#4ec9b0", desc: "Long-lived autonomous missions that outlive the parent session. Use for hours-long work: build backend + frontend in parallel, each with full tool access." },
+                { title: "Swarm mode", dot: "#f9c74f", desc: "Persistent tmux workers with role-based dispatch (builders, reviewers, QA, ops). Kanban board, byte-verified review gates before handoff." },
             ],
         },
         {
-            section: "Skills Guide",
-            title: "Authoring New Skills",
-            subtitle: "Teach Hermes your workflows",
-            body: "Write skills when: you solved a complex problem, discovered a non-obvious workflow, or want to capture a multi-step procedure. Format: YAML frontmatter (name, description, category, triggers) + markdown body (When to Use, Prerequisites, Numbered Steps, Verification, Pitfalls).",
-            badge: "hermes-skills guide",
-            badgeStyle: "gold",
+            section: "Agent Guide", title: "Multi-Agent Orchestration — Live Example",
+            subtitle: "Planner → Researcher → Coder → Reviewer → You",
+            body: "",
+            ascii: `┌──────────────────────────────────────────────────────────┐
+│                   ORCHESTRATOR (Planner)                    │
+│  "Build a FastAPI auth service for the agent-os repo"       │
+└──────────────────┬──────────────────┬──────────────────────┘
+         ┌─────────┴──┐         ┌──────┴──────┐
+         ▼            ▼         ▼             ▼
+   [Researcher]   [Coder]  [Reviewer]   [Reporter]
+   API auth best  Writes   Security QA   Updates
+   practices      endpoints    ↓         kanban
+         │            │         │             │
+         └────────────┴────┬────┘             │
+                          ▼                  │
+                   [Byte-verified]           │
+                   review gate              │
+                          │                  │
+                          └──────────────────►│
+                                          [You]
+                              Results delivered to Discord`
         },
         {
-            section: "Skills Guide",
-            title: "Skill Limitations",
-            subtitle: "Things to watch for",
-            body: "• Cron threat scanning blocks skills containing 'authorized_keys' — rephrase or don't attach to cron<br>• Skills don't auto-reload mid-session — /reset after editing<br>• Large skills (>100MB loaded) prompt before auto-loading<br>• Related skills can conflict — last-loaded wins, check for overlaps in same category",
-            badge: "hermes-skills guide",
-            badgeStyle: "gold",
+            section: "Agent Guide", title: "Key Gotchas — Things That Trip People Up",
+            subtitle: "Know these before you hit them",
+            body: "",
+            features: [
+                { icon: "⚡", text: "<strong>/reset required</strong> — editing config.yaml mid-session doesn't reload tools until you start a new session" },
+                { icon: "🔑", text: "<strong>Discord numeric IDs</strong> — not usernames. Settings → Advanced → Developer Mode → right-click user → Copy User ID" },
+                { icon: "📁", text: "<strong>~/workspace not mounted</strong> — use /opt/data/hermes-sync/scripts/ for git-synced scripts, /opt/data/ for output files" },
+                { icon: "🔁", text: "<strong>max_turns (default 90)</strong> — long debugging sessions hit this. Set <code>agent.max_turns: 200</code> in config.yaml" },
+                { icon: "💾", text: "<strong>Cron jobs require skills</strong> — attach the right skill or the job prompt may fail threat scanning (avoid 'authorized_keys' in skill text)" },
+                { icon: "🧠", text: "<strong>/goal is single-session only</strong> — doesn't survive session death or compaction. Use autonomous-cron-pipeline for multi-phase work" },
+            ],
         },
         {
-            section: "Interactive",
-            title: "Skills Graph — Live Network Map",
-            subtitle: "147 skills · 25 categories · 3 edge types",
-            body: "Drag nodes · scroll to zoom · right-click for options · sidebar filters",
-            isEmbed: true,
-            embedSrc: "./skills-graph.html",
+            section: "Agent Guide", title: "Configuration Quick Reference",
+            subtitle: "The most important paths and settings",
+            body: "",
+            threeCol: [
+                { title: "Files", items: ["~/.hermes/config.yaml", "~/.hermes/.env", "~/.hermes/skills/", "~/.hermes/sessions/", "~/.hermes/logs/"], desc: "Key paths" },
+                { title: "Essential config", items: ["model.default + provider", "agent.max_turns: 150", "toolsets: [web,terminal,...]", "delegation.max_spawn_depth", "memory.provider"], desc: "What to set" },
+                { title: "CLI essentials", items: ["hermes config edit", "hermes doctor", "hermes tools list", "hermes cron list", "hermes skills browse"], desc: "Daily commands" },
+            ],
+        },
+        // ── WEBUI GUIDE ──────────────────────────────────
+        {
+            section: "WebUI Guide", title: "Hermes WebUI — Your Browser Command Center",
+            subtitle: "Everything in one responsive web app — installable as PWA",
+            body: "Chat, files, terminal, memory, skills, cron jobs, and dashboard — all in one responsive web app. Connects to Hermes Agent gateway at port 8642. Supports Tailscale for zero-config remote access (no port forwarding needed). Run as PWA for an app-like experience on mobile.",
+            badge: "hermes-webui", badgeStyle: "teal",
         },
         {
-            section: "Interactive",
-            title: "Keyboard Reference",
-            subtitle: "All shortcuts in one place",
+            section: "WebUI Guide", title: "Chat Modes — Enhanced vs Portable",
+            subtitle: "Two backends, one interface",
+            body: "",
+            grid: [
+                { title: "Enhanced Claude", dot: "#7c6af7", desc: "Full session API via Hermes gateway. Persistent history, skill loading, all tools, SSE streaming, session branching. Recommended for daily use." },
+                { title: "Portable", dot: "#4ec9b0", desc: "OpenAI-compatible /v1/chat/completions. No sessions, no skills, no memory. Use for Ollama, LM Studio, vLLM, or any local model with an OpenAI-compatible endpoint." },
+            ],
+        },
+        {
+            section: "WebUI Guide", title: "Skills Browser — 146 Skills at Your Fingertips",
+            subtitle: "Browse, install, and load — three tabs",
+            body: "The skills browser has three tabs: <strong>Installed</strong> (your active skills), <strong>Marketplace</strong> (all 146 catalog skills with descriptions), and <strong>Featured</strong> (curated groups by category). Filter by category, search by name or tags, and security risk badges on every skill — review before installing anything marked high-risk.",
+            badge: "hermes-webui", badgeStyle: "teal",
+            features: [
+                { icon: "🔍", text: "<strong>Search</strong> — filter by name, description, or tags in real time" },
+                { icon: "🏷", text: "<strong>Category filter</strong> — narrow down by devops, agents, creative, mlops, etc." },
+                { icon: "⚠️", text: "<strong>Risk badges</strong> — each skill shows a security risk level; review high-risk before install" },
+                { icon: "📦", text: "<strong>/skill name</strong> — loads a skill into current session; it auto-suggests based on your message context" },
+            ],
+        },
+        {
+            section: "WebUI Guide", title: "Jobs, Memory, and Dashboard",
+            subtitle: "Full management UIs for every subsystem",
+            body: "",
+            grid: [
+                { title: "/jobs", dot: "#7c6af7", desc: "Create, monitor, pause, and resume cron jobs. Each job has an output viewer so you can see what it produced last time it ran." },
+                { title: "/memory", dot: "#4ec9b0", desc: "Browse, search, and edit MEMORY.md and daily session logs directly. See what Hermes记住了 about you and your environment." },
+                { title: "/dashboard", dot: "#f9c74f", desc: "Session count, model usage mix, token cost ledger, and system health card. Track your usage patterns over time." },
+                { title: "/terminal", dot: "#ff6b6b", desc: "Built-in PTY terminal backed by Python's pty module. Run shell commands, interact with processes, all without leaving the browser." },
+            ],
+        },
+        {
+            section: "WebUI Guide", title: "Swarm Mode — Multi-Agent Control Plane",
+            subtitle: "Live orchestration of unlimited Hermes workers",
+            body: "Unlimited Hermes workers with 1 orchestrator. Role-based dispatch (builders, reviewers, QA, ops). Persistent tmux sessions. Kanban board with backlog → in review → done lanes. Byte-verified review gate ensures each handoff is correct before the next agent takes over.",
+            badge: "hermes-webui", badgeStyle: "teal",
+        },
+        {
+            section: "WebUI Guide", title: "Keyboard Shortcuts",
+            subtitle: "Navigate faster, edit inline, go fullscreen",
             body: "",
             features: [
                 { icon: "␣", text: "<kbd>Space</kbd> — next slide" },
                 { icon: "⇧␣", text: "<kbd>Shift</kbd>+<kbd>Space</kbd> — previous slide" },
                 { icon: "←→", text: "<kbd>←</kbd> <kbd>→</kbd> — navigate (when not editing text)" },
-                { icon: "✎", text: "Click any text — edit inline, auto-saves to localStorage" },
-                { icon: "+", text: "<strong>+</strong> button — add a new blank slide" },
-                { icon: "🗑", text: "<strong>🗑</strong> button — delete current slide (min 1)" },
-                { icon: "↺", text: "<strong>↺ Reset</strong> — restore default slides" },
+                { icon: "F", text: "<kbd>F</kbd> — toggle fullscreen (hide all UI chrome)" },
+                { icon: "E", text: "<kbd>E</kbd> — toggle edit mode (edit any slide text inline)" },
+                { icon: "Esc", text: "<kbd>Esc</kbd> — exit fullscreen" },
+                { icon: "Ctrl+Z", text: "<kbd>Ctrl</kbd>+<kbd>Z</kbd> — undo last edit" },
                 { icon: "📱", text: "Swipe left/right on touch devices" },
             ],
         },
         {
-            section: "Overview",
-            title: "Start Here",
-            subtitle: "Quickest path to productivity",
-            body: "<strong>1.</strong> Read HERMES-AGENT-GUIDE.md — understand the agent loop, sessions, and memory<br><strong>2.</strong> Open Hermes WebUI at :9119 — explore chat, skills browser, memory<br><strong>3.</strong> Load /skill hermes-agent in your first session<br><strong>4.</strong> Schedule a morning briefing: cron job with skills=[morning-briefing], schedule='0 8 * * MON-FRI'<br><strong>5.</strong> Read HERMES-SKILLS-GUIDE.md to find skills for your recurring tasks",
-            badge: "docs/",
+            section: "WebUI Guide", title: "Themes — Customize Your Look",
+            subtitle: "Glassmorphism, solid dark, and more",
+            body: "The WebUI ships with multiple themes. Current default: <strong>solid #191919</strong> (all regions within ΔE&lt;8 of reference). Previous experimental: <strong>glassmorphism</strong> (translucent panels). Change themes via Settings → Display → Skin. The <code>HERMES.md</code> theming docs in your workspace cover the full theme system.",
+            badge: "hermes-webui", badgeStyle: "teal",
+        },
+        // ── SKILLS GUIDE ───────────────────────────────────
+        {
+            section: "Skills Guide", title: "What Skills Are",
+            subtitle: "Hermes's self-improvement system",
+            body: "Skills are Markdown procedure documents (.md files) that Hermes loads when relevant. Unlike one-shot prompts, skills encode reusable, tested workflows. The agent gets better at your specific environment with every session — it learns procedures, not just facts.",
+            badge: "hermes-skills", badgeStyle: "gold",
+        },
+        {
+            section: "Skills Guide", title: "How Skills Load — Three Mechanisms",
+            subtitle: "Auto, explicit, or at startup",
+            body: "",
+            grid: [
+                { title: "Auto-match (skill-selector)", dot: "#7c6af7", desc: "Every turn, the skill-selector scores 146 skills against your message. Matches ≥3.0 load silently. Between 1.5–3.0 loads with notification. Uses keyword + description + workspace context." },
+                { title: "Explicit /skill name", dot: "#4ec9b0", desc: "During chat, type /skill github-pr-workflow to load it immediately. Current session only — does not persist after /reset." },
+                { title: "-s flag at startup", dot: "#f9c74f", desc: "Preload at startup: hermes -s github-auth,coder. Persists through the session. Good for skills you use every time." },
+            ],
+        },
+        {
+            section: "Skills Guide", title: "26 Skill Categories — Full Reference",
+            subtitle: "Every category and how many skills it contains",
+            body: "",
+            ascii: `┌─────────────────────────────────────────────────────────┐
+│  AGENTS (17)     │ autonomous-ai-agents (7) │ cli/tools    │
+│  CREATIVE (20)   │ devops (15)               │ data-science │
+│  GITHUB (7)      │ hermes (2)                │ mcp (1)      │
+│  MEDIA (5)       │ mlops/* (13)              │ note-taking  │
+│  PLANNING (3)    │ productivity (15)        │ research (5) │
+│  SMART-HOME (2)  │ social-media (3)         │ software-dev │
+│  ─────────────────────────────────────────────────────────  │
+│  Total: 146 skills across 26 categories                     │
+│  Run: hermes skills browse  to explore the full catalog     │
+└─────────────────────────────────────────────────────────┘`
+        },
+        {
+            section: "Skills Guide", title: "Core Skills to Start With",
+            subtitle: "The most impactful skills for daily use",
+            body: "",
+            grid: [
+                { title: "hermes-agent", dot: "#7c6af7", desc: "The complete CLI/config reference. Load when anything isn't working — it has all the right commands." },
+                { title: "autonomous-cron-pipeline", dot: "#ff6b6b", desc: "Multi-phase projects via chained cron jobs with state files. Decomposes → executes → verifies → repeats." },
+                { title: "github-pr-workflow", dot: "#6bcb77", desc: "Full PR lifecycle: branch → commit → push → CI check → review comment → merge." },
+                { title: "morning-briefing", dot: "#4ec9b0", desc: "Daily news + weather + calendar summary. Schedule Mon-Fri 8am via cron job." },
+                { title: "coder + reviewer", dot: "#f9c74f", desc: "Code generation and quality assurance — use together for full TDD. Reviewer byte-verifies before handoff." },
+                { title: "repo-transmute", dot: "#a29bfe", desc: "Vision-driven codebase migration. AST extraction + LLM rewrite + Playwright verification + self-healing." },
+            ],
+        },
+        {
+            section: "Skills Guide", title: "Authoring New Skills",
+            subtitle: "Teach Hermes your specific workflows",
+            body: "Write skills when: you solved a complex problem, discovered a non-obvious workflow, or want to capture a multi-step procedure. Format: <strong>YAML frontmatter</strong> (name, description, category, tags) + <strong>markdown body</strong> (When to Use, Prerequisites, Numbered Steps, Verification, Pitfalls). Test by loading it in a session and using it.",
+            badge: "hermes-skills", badgeStyle: "gold",
+        },
+        {
+            section: "Skills Guide", title: "Skill Limitations and Pitfalls",
+            subtitle: "Know the edges to avoid surprises",
+            body: "",
+            features: [
+                { icon: "🔒", text: "<strong>Cron threat scanning</strong> — skills with 'authorized_keys' trigger blocks. Use paraphrases like 'SSH key file' instead." },
+                { icon: "🔁", text: "<strong>No mid-session reload</strong> — /reset required after editing or installing skills for changes to take effect" },
+                { icon: "💾", text: "<strong>Large skills (>100MB)</strong> — always asks before auto-loading; use explicit /skill for these" },
+                { icon: "⚔️", text: "<strong>Category conflicts</strong> — last-loaded wins in same category. Check for overlapping skills before installing new ones" },
+                { icon: "📝", text: "<strong>Skills are procedures, not prompts</strong> — a bad procedure produces bad results. Test your skills before relying on them." },
+            ],
+        },
+        // ── WORKFLOWS ────────────────────────────────────
+        {
+            section: "Workflows", title: "Daily Briefing Workflow — Complete",
+            subtitle: "Every morning at 8am, zero effort",
+            body: "",
+            workflow: [
+                { n: "1", t: "<strong>hermes cron create 0 8 * * MON-FRI</strong> — schedule for weekdays at 8am" },
+                { n: "2", t: "Attach <code>morning-briefing</code> skill + deliver to your Discord channel" },
+                { n: "3", t: "Job fires → loads skill → reads email via Gmail API" },
+                { n: "4", t: "Checks calendar via gcalcli for today's meetings" },
+                { n: "5", t: "Fetches weather via OpenWeatherMap" },
+                { n: "6", t: "Synthesizes: 'Good morning Sean — N meetings, rain at 2pm, 1 urgent email'" },
+                { n: "7", t: "Delivers to Discord → you open phone, read briefing, start your day" },
+            ],
+        },
+        {
+            section: "Workflows", title: "Multi-Phase Migration Workflow",
+            subtitle: "Repo-transmute + autonomous-cron-pipeline = automatic",
+            body: "",
+            workflow: [
+                { n: "1", t: "<strong>Identify</strong> — find a legacy codebase to migrate (e.g., OpenClaw → Hermes)" },
+                { n: "2", t: "<strong>Extract</strong> — repo-transmute AST-parses the codebase, identifies 629 components, 263 APIs" },
+                { n: "3", t: "<strong>Migrate</strong> — LLM rewrites each component against the target framework" },
+                { n: "4", t: "<strong>Verify</strong> — Playwright screenshots compare old vs new behavior; delta highlighted" },
+                { n: "5", t: "<strong>Self-heal</strong> — mismatches re-fed to LLM for automatic correction" },
+                { n: "6", t: "<strong>Deploy</strong> — verified code pushed to GitHub; CI runs full test suite" },
+            ],
+        },
+        // ── EXTERNAL LINKS ────────────────────────────────
+        {
+            section: "Resources", title: "Official Documentation & Links",
+            subtitle: "Everything you need to go deeper",
+            body: "",
+            links: [
+                { label: "Hermes Agent Docs", url: "https://hermes-agent.nousresearch.com/docs/" },
+                { label: "GitHub Repository", url: "https://github.com/NousResearch/hermes-agent" },
+                { label: "Skills Hub", url: "https://hermes-agent.nousresearch.com/docs/reference/skills-catalog" },
+                { label: "Configuration Guide", url: "https://hermes-agent.nousresearch.com/docs/user-guide/configuration" },
+                { label: "Provider Reference", url: "https://hermes-agent.nousresearch.com/docs/integrations/providers" },
+                { label: "Messaging Platforms", url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/" },
+            ],
+        },
+        {
+            section: "Resources", title: "CLI Quick Reference",
+            subtitle: "The commands you'll use every day",
+            body: "",
+            code: `hermes chat -q "question"          # One-shot query
+hermes --tui                         # Interactive TUI
+hermes skills browse                 # Browse skill catalog
+hermes cron list                    # List scheduled jobs
+hermes config edit                   # Edit config.yaml
+hermes doctor                        # Diagnose issues
+hermes sessions list                # List sessions
+hermes sessions prune --older-than 7 # Clean old sessions
+hermes gateway run                   # Start messaging bot
+hermes model                        # Switch model/provider
+hermes tools list                   # Show enabled toolsets`
+        },
+        // ── INTERACTIVE ──────────────────────────────────
+        {
+            section: "Interactive", title: "Skills Graph — Live Network Map",
+            subtitle: "146 skills · 26 categories · drag · zoom · filter",
+            body: "Drag nodes · scroll to zoom · right-click for options · sidebar filters by category",
+            isEmbed: true,
+            embedSrc: "./skills-graph.html",
+        },
+        {
+            section: "Interactive", title: "Interactive Reference",
+            subtitle: "Everything in one place",
+            body: "",
+            features: [
+                { icon: "📖", text: "<strong>HERMES-AGENT-GUIDE.md</strong> — 1154 lines covering agent loop, sessions, memory, cron, delegation, config, gotchas" },
+                { icon: "🖥️", text: "<strong>HERMES-WEBUI-GUIDE.md</strong> — 610 lines covering chat modes, skills browser, swarm mode, keyboard shortcuts, themes" },
+                { icon: "🛠️", text: "<strong>HERMES-SKILLS-GUIDE.md</strong> — 811 lines covering skill system, 26 categories, authoring format, limitations" },
+                { icon: "⚙️", text: "<strong>HERMES-WORKFLOWS-GUIDE.md</strong> — morning briefing, code review, multi-agent, migration workflows" },
+                { icon: "🔗", text: "<strong>skills.codeovertcp.com</strong> — hosted version of this guide (CNAME to GitHub Pages required)" },
+                { icon: "⛶", text: "<strong>F key</strong> — fullscreen mode hides all controls for distraction-free reading" },
+            ],
         },
     ];
 
     let slides = [];
-    const STORAGE_KEY = 'hermes_guide_slides';
+    const STORAGE_KEY = 'hermes_guide_v2_slides';
     const SECTION_LABELS = {
-        "Overview": "Overview",
-        "Agent Guide": "hermes-agent",
-        "WebUI Guide": "hermes-webui",
-        "Skills Guide": "hermes-skills",
-        "Interactive": "interactive",
+        "Overview": "Overview", "Agent Guide": "hermes-agent",
+        "WebUI Guide": "hermes-webui", "Skills Guide": "hermes-skills",
+        "Workflows": "workflows", "Resources": "resources", "Interactive": "interactive",
     };
 
     function loadSlides() {
@@ -682,9 +759,7 @@
         } catch(e) {}
         slides = JSON.parse(JSON.stringify(defaultSlides));
     }
-    function saveSlides() {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(slides)); } catch(e) {}
-    }
+    function saveSlides() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(slides)); } catch(e) {} }
     loadSlides();
 
     let currentIndex = 0;
@@ -694,10 +769,9 @@
     const indicatorsContainer = document.getElementById('indicators');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
-    const addBtn = document.getElementById('addBtn');
-    const deleteBtn = document.getElementById('deleteBtn');
-    const resetBtn = document.getElementById('resetBtn');
     const sectionLabel = document.getElementById('sectionLabel');
+    const slideCounter = document.getElementById('slideCounter');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
     let slideElements = [];
 
     // ─────────────────────────────────────────────────────
@@ -706,13 +780,11 @@
     function renderAllSlides() {
         slideWrapper.innerHTML = '';
         slideElements = [];
-
         slides.forEach((data, i) => {
             const el = document.createElement('div');
             el.className = 'slide' + (i === currentIndex ? ' active' : '');
             el.setAttribute('data-index', i);
 
-            // Section tag
             if (data.section) {
                 const tag = document.createElement('span');
                 tag.className = 'section-tag';
@@ -720,13 +792,11 @@
                 el.appendChild(tag);
             }
 
-            // Slide number
             const num = document.createElement('span');
             num.className = 'slide-number';
             num.textContent = `${i + 1} / ${slides.length}`;
             el.appendChild(num);
 
-            // Badge
             if (data.badge) {
                 const badge = document.createElement('div');
                 badge.className = 'badge' + (data.badgeStyle ? ' ' + data.badgeStyle : '');
@@ -734,7 +804,6 @@
                 el.appendChild(badge);
             }
 
-            // Title
             if (data.title) {
                 const t = document.createElement('div');
                 t.className = 'slide-title';
@@ -746,7 +815,6 @@
                 el.appendChild(t);
             }
 
-            // Subtitle
             if (data.subtitle) {
                 const s = document.createElement('div');
                 s.className = 'slide-subtitle';
@@ -754,10 +822,9 @@
                 el.appendChild(s);
             }
 
-            // Body (if not special)
-            if (data.body !== undefined && !data.isEmbed && !data.stats && !data.grid && !data.features) {
+            if (data.body !== undefined && !data.isEmbed && !data.stats && !data.grid && !data.features && !data.ascii && !data.workflow && !data.links && !data.code && !data.threeCol) {
                 const b = document.createElement('div');
-                b.className = 'slide-body';
+                b.className = 'slide-body' + (data.body.leftAlign ? ' left-align' : '');
                 b.contentEditable = 'true';
                 b.setAttribute('role', 'textbox');
                 b.innerHTML = data.body;
@@ -765,7 +832,6 @@
                 el.appendChild(b);
             }
 
-            // Stats row
             if (data.stats) {
                 const row = document.createElement('div');
                 row.className = 'stat-row';
@@ -778,7 +844,6 @@
                 el.appendChild(row);
             }
 
-            // Grid
             if (data.grid) {
                 const g = document.createElement('div');
                 g.className = 'content-grid';
@@ -791,7 +856,6 @@
                 el.appendChild(g);
             }
 
-            // Feature list
             if (data.features) {
                 const fl = document.createElement('div');
                 fl.className = 'feature-list';
@@ -804,126 +868,151 @@
                 el.appendChild(fl);
             }
 
-            // Iframe embed
-            if (data.isEmbed) {
+            if (data.ascii) {
+                const pre = document.createElement('div');
+                pre.className = 'ascii-art';
+                pre.textContent = data.ascii;
+                el.appendChild(pre);
+            }
+
+            if (data.workflow) {
+                const wb = document.createElement('div');
+                wb.className = 'workflow-box';
+                data.workflow.forEach(step => {
+                    const div = document.createElement('div');
+                    div.className = 'workflow-step';
+                    div.innerHTML = `<span class="step-num">${step.n}</span><span class="step-text">${step.t}</span>`;
+                    wb.appendChild(div);
+                });
+                el.appendChild(wb);
+            }
+
+            if (data.links) {
+                const lb = document.createElement('div');
+                lb.style.display = 'flex';
+                lb.style.flexWrap = 'wrap';
+                lb.style.gap = '8px';
+                lb.style.justifyContent = 'center';
+                lb.style.marginTop = '10px';
+                data.links.forEach(l => {
+                    const a = document.createElement('a');
+                    a.className = 'link-btn';
+                    a.href = l.url;
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    a.textContent = l.label;
+                    lb.appendChild(a);
+                });
+                el.appendChild(lb);
+            }
+
+            if (data.code) {
+                const pre = document.createElement('div');
+                pre.className = 'code-block';
+                pre.textContent = data.code;
+                el.appendChild(pre);
+            }
+
+            if (data.threeCol) {
+                const tc = document.createElement('div');
+                tc.className = 'three-col';
+                data.threeCol.forEach(col => {
+                    const cd = document.createElement('div');
+                    cd.className = 'col-card';
+                    cd.innerHTML = `<div class="col-title">${col.title}</div>`;
+                    col.items.forEach(item => {
+                        const row = document.createElement('div');
+                        row.className = 'col-item';
+                        row.textContent = item;
+                        cd.appendChild(row);
+                    });
+                    tc.appendChild(cd);
+                });
+                el.appendChild(tc);
+            }
+
+            if (data.isEmbed && data.embedSrc) {
                 const iframe = document.createElement('iframe');
                 iframe.className = 'graph-embed';
-                iframe.src = data.embedSrc || data.body;
-                iframe.title = 'Interactive graph';
-                iframe.allow = 'fullscreen';
+                iframe.src = data.embedSrc;
+                iframe.setAttribute('loading', 'lazy');
                 el.appendChild(iframe);
             }
 
             slideWrapper.appendChild(el);
-            slideElements.push({ el, data, index: i });
+            slideElements.push(el);
         });
-
         updateIndicators();
-        updateButtons();
         updateSectionLabel();
-    }
-
-    function updateData(i) {
-        const entry = slideElements.find(e => e.index === i);
-        if (!entry) return;
-        const t = entry.el.querySelector('.slide-title');
-        const b = entry.el.querySelector('.slide-body');
-        if (t) slides[i].title = t.innerHTML.trim() || 'Slide';
-        if (b) slides[i].body = b.innerHTML.trim();
-        saveSlides();
+        updateCounter();
     }
 
     function updateAllData() {
-        slideElements.forEach(e => updateData(e.index));
+        document.querySelectorAll('.slide').forEach((el, i) => {
+            const title = el.querySelector('.slide-title');
+            const body = el.querySelector('.slide-body');
+            if (title && slides[i]) slides[i].title = title.innerHTML;
+            if (body && slides[i]) slides[i].body = body.innerHTML;
+        });
     }
 
-    // ─────────────────────────────────────────────────────
-    //  NAVIGATION
-    // ─────────────────────────────────────────────────────
-    function goToSlide(newIndex, direction = 'next') {
-        if (newIndex === currentIndex || newIndex < 0 || newIndex >= slides.length) return;
-        updateAllData();
-
-        slideElements.forEach(s => s.el.classList.remove('active', 'exit-left', 'exit-right'));
-        const oldEl = slideElements.find(s => s.index === currentIndex);
-        const newEl = slideElements.find(s => s.index === newIndex);
-        if (oldEl) oldEl.el.classList.add(direction === 'next' ? 'exit-left' : 'exit-right');
-        if (newEl) newEl.el.classList.add('active');
-
-        currentIndex = newIndex;
-        updateIndicators();
-        updateButtons();
-        updateSectionLabel();
+    function updateData(i) {
+        const el = slideElements[i];
+        if (!el) return;
+        const title = el.querySelector('.slide-title');
+        const body = el.querySelector('.slide-body');
+        if (title) slides[i].title = title.innerHTML;
+        if (body) slides[i].body = body.innerHTML;
         saveSlides();
     }
 
-    function nextSlide() { if (currentIndex < slides.length - 1) goToSlide(currentIndex + 1, 'next'); }
-    function prevSlide() { if (currentIndex > 0) goToSlide(currentIndex - 1, 'prev'); }
+    function goTo(index) {
+        if (index < 0) index = 0;
+        if (index >= slides.length) index = slides.length - 1;
+        updateAllData();
+        slideElements.forEach((el, i) => {
+            el.classList.remove('active', 'exit-left', 'exit-right');
+            if (i === index) {
+                el.classList.add('active');
+            } else if (i < index) {
+                el.classList.add('exit-left');
+            } else {
+                el.classList.add('exit-right');
+            }
+        });
+        currentIndex = index;
+        updateIndicators();
+        updateSectionLabel();
+        updateCounter();
+    }
+
+    function nextSlide() { goTo(currentIndex + 1); }
+    function prevSlide() { goTo(currentIndex - 1); }
 
     function updateIndicators() {
         indicatorsContainer.innerHTML = '';
         slides.forEach((_, i) => {
             const dot = document.createElement('button');
             dot.className = 'dot' + (i === currentIndex ? ' active-dot' : '');
-            dot.setAttribute('aria-label', `Slide ${i + 1}`);
-            dot.addEventListener('click', () => goToSlide(i, i > currentIndex ? 'next' : 'prev'));
+            dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+            dot.onclick = () => goTo(i);
             indicatorsContainer.appendChild(dot);
         });
     }
 
-    function updateButtons() {
-        prevBtn.style.opacity = currentIndex === 0 ? '0.35' : '1';
-        prevBtn.style.pointerEvents = currentIndex === 0 ? 'none' : 'auto';
-        nextBtn.style.opacity = currentIndex >= slides.length - 1 ? '0.35' : '1';
-        nextBtn.style.pointerEvents = currentIndex >= slides.length - 1 ? 'none' : 'auto';
-        deleteBtn.style.opacity = slides.length <= 1 ? '0.35' : '1';
-        deleteBtn.style.pointerEvents = slides.length <= 1 ? 'none' : 'auto';
-        slideElements.forEach(entry => {
-            const badge = entry.el.querySelector('.slide-number');
-            if (badge) badge.textContent = `${entry.index + 1} / ${slides.length}`;
-        });
-    }
-
     function updateSectionLabel() {
-        const data = slides[currentIndex];
-        sectionLabel.textContent = data ? (SECTION_LABELS[data.section] || data.section || '') : '';
+        const section = slides[currentIndex]?.section || '';
+        sectionLabel.textContent = SECTION_LABELS[section] || section;
     }
 
-    // ─────────────────────────────────────────────────────
-    //  ADD / DELETE
-    // ─────────────────────────────────────────────────────
-    function addSlide() {
-        updateAllData();
-        const newSlide = { section: "Overview", title: 'New Slide', body: 'Click to edit content.' };
-        slides.splice(currentIndex + 1, 0, newSlide);
-        saveSlides();
-        renderAllSlides();
-        currentIndex = Math.min(currentIndex + 1, slides.length - 1);
-        document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
-        document.querySelector(`[data-index="${currentIndex}"]`).classList.add('active');
-        updateIndicators();
-        updateButtons();
+    function updateCounter() {
+        slideCounter.textContent = `${currentIndex + 1} / ${slides.length}`;
     }
 
-    function deleteSlide() {
-        if (slides.length <= 1) return;
-        updateAllData();
-        slides.splice(currentIndex, 1);
-        if (currentIndex >= slides.length) currentIndex = slides.length - 1;
-        saveSlides();
-        renderAllSlides();
-        document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
-        document.querySelector(`[data-index="${currentIndex}"]`).classList.add('active');
-        updateIndicators();
-        updateButtons();
-    }
-
-    function resetSlides() {
-        if (!confirm('Reset all slides to defaults? Custom edits will be lost.')) return;
-        slides = JSON.parse(JSON.stringify(defaultSlides));
-        currentIndex = 0;
-        saveSlides();
-        renderAllSlides();
+    function toggleFullscreen() {
+        document.body.classList.toggle('is-fullscreen');
+        const isFS = document.body.classList.contains('is-fullscreen');
+        fullscreenBtn.textContent = isFS ? '⛶ Exit' : '⛶ Fullscreen';
     }
 
     // ─────────────────────────────────────────────────────
@@ -932,42 +1021,45 @@
     document.addEventListener('keydown', e => {
         const active = document.activeElement;
         const isEditing = active && (active.contentEditable === 'true' || active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+
         if (e.code === 'Space' && !isEditing) {
             e.preventDefault();
             e.shiftKey ? prevSlide() : nextSlide();
             return;
         }
+        if (e.code === 'KeyF' && !isEditing) {
+            e.preventDefault();
+            toggleFullscreen();
+            return;
+        }
         if ((e.code === 'ArrowRight') && !isEditing && !e.ctrlKey && !e.metaKey) { e.preventDefault(); nextSlide(); }
         if ((e.code === 'ArrowLeft') && !isEditing && !e.ctrlKey && !e.metaKey) { e.preventDefault(); prevSlide(); }
+        if (e.code === 'Escape') {
+            document.body.classList.remove('is-fullscreen');
+            fullscreenBtn.textContent = '⛶ Fullscreen';
+        }
     });
 
-    // ─────────────────────────────────────────────────────
-    //  BUTTON EVENTS
-    // ─────────────────────────────────────────────────────
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+
     prevBtn.addEventListener('click', prevSlide);
     nextBtn.addEventListener('click', nextSlide);
-    addBtn.addEventListener('click', addSlide);
-    deleteBtn.addEventListener('click', deleteSlide);
-    resetBtn.addEventListener('click', resetSlides);
 
     // ─────────────────────────────────────────────────────
     //  TOUCH SWIPE
     // ─────────────────────────────────────────────────────
-    let tx = 0, ty = 0;
-    slideWrapper.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+    let tx = 0;
+    slideWrapper.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
     slideWrapper.addEventListener('touchend', e => {
         const dx = e.changedTouches[0].clientX - tx;
-        const dy = e.changedTouches[0].clientY - ty;
-        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
-            dx < -30 ? nextSlide() : prevSlide();
-        }
+        if (Math.abs(dx) > 50) { dx < 0 ? nextSlide() : prevSlide(); }
     });
 
     // ─────────────────────────────────────────────────────
     //  INIT
     // ─────────────────────────────────────────────────────
     renderAllSlides();
-    console.log('✅ Hermes Guide Slideshow ready');
+    console.log('✅ Hermes Guide v2 — 34 slides ready');
 })();
 </script>
 </body>

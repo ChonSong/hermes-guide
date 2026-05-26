@@ -1,11 +1,9 @@
 # Hermes WebUI — Complete User Guide
 
 > **Version:** 2.x | **URL:** `http://localhost:9119` (when running) | **Backend:** Requires Hermes Agent gateway running
->
-> Hermes WebUI is the browser-based command center for Hermes Agent. Chat, files, terminal, memory, skills, scheduled jobs, and agent management — all in one responsive web app. It can also run as a PWA (installable) and via Tailscale for remote access.
+> **Docs:** [hermes-agent.nousresearch.com/docs](https://hermes-agent.nousresearch.com/docs/)
 
-![Hermes Workspace — Chat](./public/screenshots/chat-v3.png)
-![Hermes Workspace — Dashboard](./public/screenshots/dashboard-v3.png)
+Hermes WebUI is the browser-based command center for Hermes Agent. Chat, files, terminal, memory, skills, scheduled jobs, and agent management — all in one responsive web app. It can also run as a PWA (installable) and via Tailscale for remote access.
 
 ---
 
@@ -20,29 +18,29 @@
 7. [Skills Browser](#7-skills-browser)
 8. [Jobs (Cron)](#8-jobs-cron)
 9. [Dashboard](#9-dashboard)
-10. [Settings & Providers](#10-settings--providers)
+10. [Swarm Mode](#10-swarm-mode)
 11. [Keyboard Shortcuts](#11-keyboard-shortcuts)
 12. [Themes](#12-themes)
-13. [Swarm Mode](#13-swarm-mode)
-14. [Mobile & PWA](#14-mobile--pwa)
-15. [How It Connects to Hermes Agent](#15-how-it-connects-to-hermes-agent)
-16. [Known Limitations](#16-known-limitations)
+13. [Mobile & PWA](#13-mobile--pwa)
+14. [How It Connects to Hermes Agent](#14-how-it-connects-to-hermes-agent)
+15. [Known Limitations](#15-known-limitations)
 
 ---
 
 ## 1. What Is Hermes WebUI?
 
 Hermes WebUI (also called **Hermes Workspace** or **hermes-workspace**) is the React-based web interface that talks to your Hermes Agent gateway. It's not a wrapper around an LLM API — it's a full workspace UI that:
+
 - Sends messages to your Hermes Agent gateway
 - Renders tool calls, streaming text, and markdown in real time
 - Manages sessions, skills, memory, cron jobs, files, and terminal
 - Provides a built-in PTY terminal backed by Python's pty module
 - Supports multi-agent Swarm mode
 
-**WebUI vs TUI vs CLI:**
+### WebUI vs TUI vs CLI vs Messaging
 
 | Interface | Best for | Access |
-|-----------|---------|--------|
+|-----------|----------|--------|
 | **WebUI** (this) | Daily driving, mobile access, visual session management | Browser at `:9119` |
 | **TUI** (Ink/React terminal) | Rich CLI experience, when you have SSH access | `hermes --tui` in container |
 | **CLI** (one-shot) | Scripts, quick questions | `hermes chat -q "..."` |
@@ -80,7 +78,7 @@ If you've set a password via `CLAUDE_PASSWORD` in the environment, you'll see a 
 
 ### 2.4 Accessing Remotely via Tailscale
 
-The WebUI supports Tailscale for zero-config remote access. See the [desktop update docs](https://github.com/outsourc-e/hermes-workspace/blob/main/docs/desktop-update-system.md) for Tailscale integration setup.
+The WebUI supports Tailscale for zero-config remote access. See the [desktop update docs](https://github.com/outsourc-e/hermes-workspace/blob/main/docs/desktop-update-system.md) for Tailscale integration setup. With Tailscale, you can access the WebUI from anywhere without port forwarding.
 
 ---
 
@@ -98,159 +96,75 @@ The WebUI has two backend modes (switchable in the UI):
 
 **Portable** — OpenAI-compatible `/v1/chat/completions`. Works with any OpenAI-compatible endpoint (Ollama, LM Studio, vLLM, etc.). No session persistence, no skills.
 
-### 3.2 Message Rendering
+### 3.2 Chat Features
 
-Messages render with:
-- Full markdown (GFM: tables, task lists, strikethrough)
-- Syntax-highlighted code blocks (Shiki)
-- Collapsible tool call pills with arguments and results
-- Thinking/reasoning blocks (configurable: show or hide via `/reasoning show|hide`)
-- Timestamps on each message
-- Copy button on code blocks and tool calls
+- **Real-time streaming** — text appears as it's generated, no waiting for complete response
+- **Tool call rendering** — see each tool execution as it happens with timing info
+- **Markdown rendering** — code blocks, tables, LaTeX math all render properly
+- **Session branching** — fork any session to experiment without losing the original
+- **Context indicator** — shows current session ID and model in use
 
-### 3.3 Chat Composer
+### 3.3 Slash Commands (in chat)
 
-The input area at the bottom supports:
-- **Multi-line input** — Shift+Enter for newlines, Enter to send
-- **`/` slash commands** — autocomplete command menu: `/new`, `/clear`, `/model`, `/save`, `/skills`, `/skin`, `/help`, `/btw`, `/branch`
-- **File attachments** — drag-and-drop or click the attachment button (images base64-encoded for multimodal models)
-- **Voice input** — Web Speech API microphone button
-- **Context meter** — token usage percentage bar, warns at 80% of context limit
+Type these directly in the chat input:
 
-### 3.4 Session Management
-
-**Sidebar (left):**
-- Session list with search
-- Pin/unpin sessions
-- Rename sessions (click title or `/title name`)
-- Delete with confirmation
-- Fork/branch sessions
-
-**Session forking:** Creates a copy of the current session as a new branch. Useful for exploring alternatives without losing the original.
-
-**Session tombtones:** Deleted sessions are marked as tombstones rather than immediately removed, allowing recovery of accidentally deleted sessions.
-
-### 3.5 Inspector Panel
-
-The right sidebar shows:
-- **Session activity** — recent tool calls and their results
-- **Memory** — what's loaded in the current session
-- **Skills** — which skills are active
-
-Toggle it with the inspector icon button.
-
-### 3.6 Slash Command Reference
-
-Typed in the chat input (after `/`):
-
-| Command | What it does |
-|---------|-------------|
+| Command | Action |
+|---------|--------|
 | `/new` | Fresh session |
-| `/clear` | Clear screen + new session |
-| `/retry` | Resend last message |
-| `/undo` | Remove last exchange |
-| `/title [name]` | Name the session |
-| `/compress` | Manually compress context |
-| `/stop` | Kill background processes |
-| `/rollback [N]` | Restore checkpoint |
-| `/background <prompt>` | Run in background |
-| `/queue <prompt>` | Queue for next turn |
-| `/resume [name]` | Resume a named session |
-| `/goal [text]` | Set a standing goal |
-| `/model [name]` | Show/change model |
-| `/reasoning [level]` | Set reasoning effort |
-| `/voice [on\|off\|tts]` | Voice mode |
+| `/skill name` | Load a skill |
+| `/goal text` | Set a persistent goal |
+| `/fork` | Branch session |
+| `/resume name` | Resume a session |
+| `/status` | Show session info |
+| `/verbose` | Cycle verbose modes |
 | `/yolo` | Toggle approval bypass |
-| `/skin [name]` | Change theme |
-| `/skill <name>` | Load skill |
-| `/btw` | Ephemeral side question |
-| `/branch` | Fork session |
-| `/save` | Save conversation to file |
-| `/image` | Attach image |
-| `/usage` | Token usage stats |
-| `/insights [days]` | Usage analytics |
-| `/help` | Show commands |
-
-### 3.7 Provider Selection
-
-Click the model name in the chat header to open the **model picker dialog** inline in the chat. Choose from available providers and models. The change applies to the current session.
 
 ---
 
 ## 4. Files & Code Editor
 
-**Route:** `/files`
+**Route:** `/workspace` or `/files`
 
-Full workspace file browser with directory tree navigation, Monaco Editor integration, and file preview.
+A file browser and code editor integrated into the WebUI. Navigate the container filesystem, view and edit code, and see changes in real time.
 
-### 4.1 File Browser
+### Features
 
-- Navigate the workspace directory tree
-- Create, read, rename, delete, mkdir operations
-- File upload (multipart)
-- Image preview (base64 rendering)
-- Path traversal is sandboxed — can't escape workspace root
-- Ignored directories: `node_modules`, `.git`, `.next`, `.turbo`, `.cache`, `__pycache__`, `.venv`, `dist`
-- Configurable depth (default 3 levels) and entry limits (max 20,000)
+- **Directory tree** — navigate `/opt/data` (container's `~/.hermes`) and mounted volumes
+- **Syntax highlighting** — supports all major languages (Python, JS, TypeScript, Go, Rust, etc.)
+- **Double-click to rename** — rename files and folders directly in the UI
+- **Breadcrumb navigation** — always know where you are in the tree
 
-### 4.2 Monaco Editor
+### Screenshots Available
 
-Click any file to open it in the Monaco Editor panel:
-- Full syntax highlighting for 50+ languages
-- Word wrap toggle
-- Minimap toggle
-- Find and replace
-- Font size adjustable in Settings
-
-### 4.3 File Preview Dialog
-
-For quick viewing without opening the editor, use the file preview dialog. Shows file content with syntax highlighting, read-only.
-
-### 4.4 Supported File Operations
-
-| Operation | How |
-|-----------|-----|
-| Read | Click file in browser or use `/api/files?action=read` |
-| Write | Use Monaco Editor or write via API |
-| Create | New file button in file browser |
-| Rename | Right-click → Rename |
-| Delete | Right-click → Delete (with confirmation) |
-| Mkdir | New folder button |
-| Download | `/api/files?action=download` |
+The WebUI ships with annotated screenshots showing:
+- `ui-workspace.png` — the full workspace layout
+- `ui-sessions.png` — the session management panel
 
 ---
 
 ## 5. Terminal
 
-**Route:** `/terminal`
+**Route:** `/terminal` or embedded in the workspace
 
-A full cross-platform PTY terminal backed by Python's `pty-helper.py` (no native `node-pty` dependency). Uses **xterm.js** with fit, search, and web-links addons. 256-color support (`TERM=xterm-256color`, `COLORTERM=truecolor`).
+Built-in PTY terminal backed by Python's pty module. Run shell commands, interact with processes, and use familiar tools (vim, nano, tmux) — all without leaving the browser.
 
-### 5.1 Features
+### Using the Terminal
 
-- Create, input, resize, close shell sessions
-- Real-time SSE streaming of terminal output
-- Keepalive pings every 8 seconds
-- Persistent shell sessions across WebUI navigation
-- Platform-aware default shell: zsh on macOS, bash on Linux, PowerShell on Windows
+- Opens at `/opt/data` by default (container's `~/.hermes`)
+- Full PTY support — interactive commands work (top, htop, vim)
+- Scrollback buffer — previous output preserved
+- Copy/paste support
 
-### 5.2 Keyboard Shortcuts
+### Key Commands
 
-| Shortcut | Action |
-|----------|--------|
-| `⌘K` / `Ctrl+K` | Open command palette |
-| `Ctrl+L` | Clear terminal |
-| `Ctrl+C` | Send interrupt (SIGINT) |
-| `Ctrl+D` | Send EOF |
-| `Ctrl+Z` | Suspend process (SIGTSTP) |
-
-### 5.3 Mobile
-
-The terminal has adapted touch input for mobile devices. A virtual keyboard with common shortcuts is shown above the terminal input on mobile.
-
-### 5.4 Debug Panel
-
-The terminal workspace component includes a debug panel showing session state, buffer size, and connection health.
+```bash
+cd /opt/data                           # Navigate to hermes home
+ls -la                                 # List files
+hermes config edit                     # Edit config
+gh auth status                         # Check GitHub auth
+htop                                   # Monitor processes
+tmux ls                                # List tmux sessions
+```
 
 ---
 
@@ -258,65 +172,66 @@ The terminal workspace component includes a debug panel showing session state, b
 
 **Route:** `/memory`
 
-Browse, search, and edit Hermes Agent's persistent memory files (`~/.hermes/`). Shows MEMORY.md, daily memory files, and any memories stored in `memories/`.
+Browse, search, and edit Hermes's memory files directly.
 
-### 6.1 What You Can Do
+### What You Can Do
 
-- **List** all memory files sorted by date
-- **Search** across all memory entries — text search with line-level results (max 200 matches)
-- **Preview** memory files with markdown rendering
-- **Edit** files directly with the MemoryEditor component
+- **View SOUL.md** — the agent's personality and core principles
+- **View/edit MEMORY.md** — curated long-term facts about you and your setup
+- **Browse daily logs** — `memory/YYYY-MM-DD.md` files from each session
+- **Search** — find anything across all memory files
 
-### 6.2 Memory Files Shown
+### Key Memory Files
 
-- `MEMORY.md` — always first in the list
-- `memory/YYYY-MM-DD.md` — daily logs sorted by date descending
-- `memories/` — additional curated memory files
-- `USER.md` — user profile
+| File | Purpose |
+|------|---------|
+| `SOUL.md` | Agent identity and personality |
+| `MEMORY.md` | Curated long-term knowledge |
+| `memory/YYYY-MM-DD.md` | Daily session logs |
 
-### 6.3 How Memory Works
+### Updating MEMORY.md
 
-Hermes reads these files at the start of each new session. You can edit them in the WebUI and the changes will be picked up by Hermes on its next session start. **Edits within an active session require `/reset` to take effect** (starts a new session with updated memory).
-
-### 6.4 Path
-
-Files are stored in `~/.hermes/` on the host (mapped to `/opt/data/` inside the container). The WebUI accesses them via the Hermes Agent gateway's memory API.
+The agent updates MEMORY.md after significant events. You can also edit it manually — the agent reads it fresh on each main session start. Good things to put there:
+- Preferences (concise output, preferred workflows)
+- Environment details (custom paths, specific configs)
+- Lessons learned (don't do X, always use Y instead)
 
 ---
 
 ## 7. Skills Browser
 
-**Route:** `/skills`
+**Route:** `/skills` or `/skills/$skillName`
 
-Browse and manage the 2,000+ skill registry. Three tabs:
+Browse, install, and manage all 146 available skills.
 
-| Tab | What it shows |
-|-----|---------------|
-| **Installed** | Skills currently installed in your `~/.hermes/skills/` |
-| **Marketplace** | All available skills in the catalog |
-| **Featured** | Curated skill groups (Most Popular, New This Week, Developer Tools, Productivity) |
+### Three Tabs
 
-### 7.1 Categories
+1. **Installed** — skills currently active in your environment
+2. **Marketplace** — all 146 catalog skills with descriptions
+3. **Featured** — curated skill groups by category
 
-All, Web & Frontend, Coding Agents, Git & GitHub, DevOps & Cloud, Browser & Automation, Image & Video, Search & Research, AI & LLMs, Productivity, Marketing & Sales, Communication, Data & Analytics, Finance & Crypto.
+### Filtering & Search
 
-### 7.2 Search & Filter
+- **Search bar** — filter by name, description, or tags in real time
+- **Category filter** — narrow down by devops, agents, creative, mlops, etc.
+- **Security risk badges** — each skill shows a risk level (review high-risk before install)
 
-Filter skills by name, description, author, tags, and triggers. Sort by name or category. Full-text search with category badges and origin indicators.
+### Loading Skills
 
-### 7.3 Security Risk Display
+- **Auto-match** — the skill-selector scores skills against your message every turn and loads relevant ones silently (score ≥3.0) or with notification (score 1.5–3.0)
+- **Explicit load** — `/skill github-pr-workflow` in chat
+- **Startup preload** — `hermes -s github-auth,coder` to preload at launch
 
-Each skill shows a risk level: **safe**, **low**, **medium**, **high**, with specific flags and scores. Review before installing high-risk skills — they may execute arbitrary code.
+### Core Skills to Know
 
-### 7.4 Installing Skills
-
-1. Browse or search for a skill
-2. Click **Install** — downloads to `~/.hermes/skills/`
-3. Load in session: `/skill skill-name` or pre-load with `hermes -s skill-name`
-
-### 7.5 Workspace Skills
-
-The skills browser also has a **workspace skills screen** for per-session skill management — configure which skills load for which context.
+| Skill | Purpose |
+|-------|---------|
+| `hermes-agent` | Complete CLI/config reference — load when anything isn't working |
+| `autonomous-cron-pipeline` | Multi-phase projects via chained cron jobs |
+| `github-pr-workflow` | Full PR lifecycle |
+| `morning-briefing` | Daily news + weather + calendar |
+| `coder` + `reviewer` | Code generation and QA — use together |
+| `repo-transmute` | Vision-driven codebase migration |
 
 ---
 
@@ -324,288 +239,204 @@ The skills browser also has a **workspace skills screen** for per-session skill 
 
 **Route:** `/jobs`
 
-Manage scheduled autonomous tasks. Create, edit, pause, resume, trigger, and view output for all cron jobs.
+Create, monitor, pause, and resume cron jobs. Each job has its own output viewer so you can see what it produced last time it ran.
 
-### 8.1 Job States
+### Creating a Job
 
-Each job shows:
-- **Enabled/Disabled** state
-- **Next run** and **last run** timestamps
-- **Last status** — ok, error, or running
-- **Output** — click to view full execution results
+1. Click **New Job** or the **+** button
+2. Set the **schedule** (30m, hourly, daily, or cron syntax)
+3. Write the **prompt** (what the job should do)
+4. Attach **skills** (optional but recommended)
+5. Set **delivery** (where to send output)
+6. Save
 
-### 8.2 Creating a Job
+### Job States
 
-Click **New Job** to open the create dialog:
-- **Name** — descriptive label
-- **Schedule** — cron expression or natural language (`every 30m`, `0 9 * * MON-FRI`)
-- **Prompt** — the task description (self-contained — include all context needed)
-- **Skills** — attach skills to load before execution
-- **Delivery** — where to send output (`origin`, `local`, `all`, or platform:chat_id)
-- **Repeat** — one-shot or recurring
+| State | Meaning |
+|-------|---------|
+| `active` | Running on schedule |
+| `paused` | Temporarily disabled |
+| `disabled` | Manually turned off |
+| `ok` | Last run succeeded |
+| `error` | Last run failed |
 
-### 8.3 Delivery Gotcha
+### Monitoring
 
-**`deliver: local` saves output to the filesystem — you never see it.** `deliver: discord` does NOT work via the delivery field — the scheduler has no Discord delivery code path. For reliable Discord delivery, include `send_message` tool calls in the job prompt itself.
-
-**Always test delivery immediately** by clicking **Run Now** after creating the job. `last_status: ok` does NOT mean output reached you.
-
-### 8.4 Viewing Output
-
-Click any job to expand its output view. Shows the full execution transcript, any error messages, and delivery status. Useful for auditing what the cron job actually did.
+- **Last run** — timestamp of most recent execution
+- **Output** — what the job produced (viewable in the output panel)
+- **Error log** — if it failed, see why
+- **Pause/resume** — control without deleting
 
 ---
 
 ## 9. Dashboard
 
-**Route:** `/dashboard`
+**Route:** `/dashboard` or `/insights`
 
-Aggregated overview showing:
-- **Sessions** — active sessions, session count, recent activity
-- **Model mix** — which models you've been using
-- **Cost ledger** — token usage across providers
-- **Attention card** — what the agent is currently focused on
-- **Ops strip** — quick actions and status indicators
+Session count, model usage mix, token cost ledger, and system health card.
 
-The dashboard overflow panel provides expanded views for deeper inspection.
+### What's Tracked
+
+- **Sessions** — total active sessions, session history over time
+- **Model mix** — which models you've used and how much
+- **Token usage** — daily/weekly/monthly token counts
+- **Cost ledger** — estimated spend per provider
+- **System health** — component status (gateway, tools, memory)
+
+### Screenshots Available
+
+- `insights-daily-tokens-models.png` — token usage breakdown by model
+- `system-health-panel.png` — system health card with component status
 
 ---
 
-## 10. Settings & Providers
+## 10. Swarm Mode
 
-**Route:** `/settings` and `/settings/providers`
+**Route:** `/swarm` (when enabled)
 
-### 10.1 Settings
+Multi-agent control plane for orchestrating unlimited Hermes workers.
 
-Centralized configuration panel for:
-- **Theme** — dark/light mode, accent color
-- **Editor** — font size, word wrap, minimap
-- **Notifications** — enable/disable sounds
-- **Usage threshold** — when to show context warnings
-- **Smart suggestions** — model recommendations
-- **Mobile nav** — dock, integrated, or scroll-hide modes
+### How It Works
 
-### 10.2 Providers Screen
+- **1 Orchestrator** — your primary Hermes session that plans and dispatches
+- **N Workers** — persistent tmux sessions running Hermes agents with specific roles
+- **Role-based dispatch** — builders, reviewers, QA, ops — each worker has a specialty
+- **Kanban board** — backlog → in review → done lanes
+- **Byte-verified review gates** — each handoff is verified correct before the next agent takes over
 
-Manage AI provider connections. Each provider shows:
-- Auth type (API key, OAuth, etc.)
-- Connection status
-- Masked API key display
-- Quick actions (re-auth, test, remove)
+### Best For
 
-**Supported providers:**
-| Provider | Auth | Notes |
-|----------|------|-------|
-| Anthropic | API key, CLI Token | Claude Haiku/Sonnet/Opus |
-| OpenAI | API key | GPT models |
-| Google | API key, OAuth | Gemini models |
-| OpenRouter | API key | Multi-provider unified |
-| Nous Portal | OAuth device code | Main provider in this setup |
-| Ollama | Local (no auth) | Local models |
-| MiniMax | API key | Main model in this setup |
-| Custom | API key | Any OpenAI-compatible endpoint |
-
-### 10.3 Provider Wizard
-
-Guided step-by-step setup for new providers. Select provider → authenticate → test → save. Handles OAuth flows, API key input, and connection verification.
-
-### 10.4 Config Management
-
-The WebUI can read and write `~/.hermes/config.yaml` and `~/.hermes/.env` directly through the Settings UI. Changes take effect on the next session (or restart the gateway for immediate effect).
+- Complex multi-phase projects (architecture work, large refactors)
+- Parallel development (backend + frontend simultaneously)
+- Automated code review pipelines
+- Multi-repository management
 
 ---
 
 ## 11. Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `⌘K` / `Ctrl+K` | Open command palette |
-| `Ctrl+L` | Clear chat |
-| `Escape` | Close modal/dialog |
-| `Shift+Enter` | New line in composer |
-| `Enter` | Send message |
-| `/` | Open slash command menu |
+| Key | Action |
+|-----|--------|
+| `Space` | Next slide |
+| `Shift+Space` | Previous slide |
+| `←` `→` | Navigate slides (when not editing) |
+| `F` | Toggle fullscreen (hides all UI chrome) |
+| `E` | Toggle edit mode (inline text editing) |
+| `Esc` | Exit fullscreen |
+| `Ctrl+Z` | Undo last edit |
+| Swipe | Navigate on touch devices |
 
-### 11.1 Terminal Shortcuts
+### Editable Content
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+C` | Interrupt |
-| `Ctrl+D` | EOF |
-| `Ctrl+Z` | Suspend |
-| `Ctrl+L` | Clear |
-
-### 11.2 Command Palette
-
-Press `⌘K` anywhere in the app to open the command palette. Search and execute any command: navigation, settings, session management, skills.
+Click any text element (title, body, subtitle) to edit it inline. Changes auto-save to localStorage. Use the **↺ Reset** button to restore default slides.
 
 ---
 
 ## 12. Themes
 
-### 12.1 Available Themes
+The WebUI ships with multiple color schemes:
 
-Hermes WebUI ships with **8 built-in themes** (4 dark + 4 light variants):
+### Current Default: Solid Dark (#191919)
 
-| Theme | Style |
-|-------|-------|
-| **Claude Official** | Navy and indigo flagship |
-| **Claude Official Light** | Soft indigo light palette |
-| **Claude Classic** | Bronze accents on dark charcoal |
-| **Classic Light** | Warm parchment with bronze |
-| **Slate** | Cool blue developer theme |
-| **Slate Light** | GitHub-light with blue accents |
-| **Mono** | Clean monochrome grayscale |
-| **Mono Light** | Bright monochrome grayscale |
+All regions within ΔE<8 of the reference values:
 
-Plus **SciFi theme** — a full dark/light palette remap with different visual identity.
+| Region | Reference Color |
+|--------|----------------|
+| Top bar | `#131313` |
+| Left sidebar | `#191919` |
+| Center content | `#1a1a1a` |
+| Right panel | `#1d1d1d` |
+| Dock | `#191919` |
 
-### 12.2 Switching Themes
+### Previous: Glassmorphism
 
-**In chat:** `/skin slate` (or any theme name)
-**In Settings:** Theme picker in the Settings panel
-**CSS Variables:** Theme tokens use CSS custom properties, so themes can be overridden via browser dev tools.
+Translucent panels with backdrop blur (removed in current version for performance).
 
-### 12.3 System Theme
+### Changing Themes
 
-Set `theme: system` in settings to follow your OS light/dark preference automatically.
+Settings → Display → Skin. The `THEMES.md` in your workspace covers the full theme system with ΔE color difference measurements.
 
 ---
 
-## 13. Swarm Mode
+## 13. Mobile & PWA
 
-**Route:** See `/swarm` routes
+### PWA Installation
 
-Swarm mode turns the WebUI into a **live multi-agent control plane**. It's an advanced feature for running multiple autonomous Hermes Agents simultaneously with role-based dispatch.
+The WebUI is a Progressive Web App. On mobile:
+1. Open the WebUI in your browser
+2. Tap **Share** → **Add to Home Screen**
+3. Opens as a standalone app without browser chrome
 
-### 13.1 How It Works
+### Mobile Features
 
-- Unlimited Hermes Agent workers with **1 orchestrator**
-- Workers are **persistent tmux sessions** that maintain context across tasks
-- Roles: builders, reviewers, docs, research, ops, triage, QA, lab
-- Role-based dispatch routes tasks to the right worker without manual assignment
-- **Byte-verified review gate** — checkpoints verified before handoff
-- Autonomous PR/issue lanes, lab experiments, repair playbook
+- **Responsive layout** — adapts to phone screens
+- **Touch swipe** — swipe left/right to navigate slides
+- **Fullscreen** — tap the fullscreen button for distraction-free reading
 
-### 13.2 What's in the Swarm UI
+### Remote Access via Tailscale
 
-- **Orchestrator Chat** — ask the control plane for a task, decomposed mission, or full broadcast
-- **Live Agent Panel** — see all workers, their roles, state, and runtime status
-- **Kanban TaskBoard** — backlog → ready → running → review → blocked → done lanes
-- **Reports + Inbox** — review checkpoints, blockers, handoffs, decisions needing human judgment
-- **TUI View** — attach to tmux-backed workers or fall back to live shell/log stream
-
-### 13.3 Starting Swarm
-
-See `docs/swarm/` in the hermes-workspace repo. Swarm mode requires tmux on the host and the Hermes Agent gateway running.
-
-### 13.4 Conductor (Advanced)
-
-Conductor is a mission dispatch + decomposition feature. It requires the upstream dashboard plugin (not yet in upstream Hermes Agent — see [issue #262](https://github.com/outsourc-e/hermes-workspace/issues/262)). When the plugin isn't available, the UI shows a clear placeholder instead of failing.
+No port forwarding needed. Install Tailscale on both ends, connect to the same tailnet, and access the WebUI at its Tailscale address from anywhere.
 
 ---
 
-## 14. Mobile & PWA
-
-### 14.1 Mobile Layout
-
-Hermes WebUI is responsive. On mobile:
-- Bottom tab bar for navigation (`dock` mode) or integrated navigation (`integrated` mode)
-- Hamburger menu for secondary navigation
-- Mobile-optimized chat composer
-- Mobile terminal with touch-adapted input
-- Mobile session panel
-
-### 14.2 PWA Installation
-
-Hermes Workspace can be installed as a Progressive Web App:
-1. Open in Chrome/Safari on mobile
-2. "Add to Home Screen" / "Install App"
-3. Runs as a native-feeling app with offline caching
-
-### 14.3 Tailscale Access
-
-With Tailscale integration configured, you can access the WebUI from any device on your tailnet — no port forwarding needed. See `docs/desktop-update-system.md` for setup.
-
----
-
-## 15. How It Connects to Hermes Agent
+## 14. How It Connects to Hermes Agent
 
 ```
-Browser (WebUI) ←→ Hermes Agent Gateway (port 8642) ←→ Hermes Agent
-                      ↓
-              SQLite (sessions, state)
-              Skills, memory files
-              Cron scheduler
+┌────────────────┐       HTTP/WebSocket       ┌──────────────────┐
+│   Your Browser  │ ◄─────────────────────────► │  Hermes Gateway  │
+│   (WebUI :9119) │        SSE Streaming         │   (:8642)        │
+└────────────────┘                             └────────┬─────────┘
+                                                         │
+                                                 ┌────────┴─────────┐
+                                                 │  Hermes Agent     │
+                                                 │  (Docker :8642)   │
+                                                 │  + Tool Executor  │
+                                                 │  + LLM Provider   │
+                                                 └────────────────────┘
 ```
 
-The WebUI is a **client** to the Hermes Agent gateway, not a separate agent. All chat, file, terminal, and memory operations go through the gateway.
-
-### 15.1 Two Backend Modes
-
-**Enhanced Claude mode** — WebUI sends messages to the Hermes Agent gateway (`/api/send-stream`). The gateway routes to the AIAgent. Sessions are stored in SQLite via Hermes Agent. Full features.
-
-**Portable mode** — WebUI sends directly to an OpenAI-compatible endpoint (`/v1/chat/completions`). No session persistence, no skill loading, no Hermes features. Connects to Ollama, LM Studio, etc.
-
-### 15.2 WebUI Auto-Start
-
-The WebUI can auto-detect a sibling `hermes-agent/` directory and spawn the gateway. It reads the Hermes Agent Python venv configuration and starts uvicorn with health polling.
-
-### 15.3 Key API Endpoints
-
-| Endpoint | What it does |
-|----------|-------------|
-| `POST /api/send-stream` | Main streaming chat (enhanced Claude mode) |
-| `POST /api/send` | Non-streaming chat send |
-| `GET /api/chat-events` | SSE event stream |
-| `GET/POST/PATCH/DELETE /api/sessions` | Session CRUD |
-| `GET/POST /api/files` | File operations |
-| `GET/POST/PATCH/DELETE /api/claude-jobs` | Cron job management |
-| `POST /api/terminal-stream` | PTY session creation |
-| `GET /api/memory` | Read agent memory |
-| `GET /api/skills` | List skills |
-| `GET /api/claude-config` | Read config.yaml + .env |
-| `PATCH /api/claude-config` | Write config |
-| `GET /api/gateway-status` | Gateway capabilities |
-| `POST /api/start-claude` | Auto-start gateway |
+- **WebUI on :9119** — the React frontend (static files)
+- **Gateway on :8642** — the FastAPI backend that WebUI connects to
+- **Agent** — handles the actual tool execution and LLM calls
 
 ---
 
-## 16. Known Limitations
+## 15. Known Limitations
 
-### 16.1 Conductor Requires Upstream Plugin
+### Session Branching Behavior
 
-Conductor (mission dispatch + decomposition) needs a dashboard plugin not yet in the Hermes Agent upstream. The UI shows a clear placeholder when that endpoint isn't available ([#262](https://github.com/outsourc-e/hermes-workspace/issues/262)). All other features work without it.
+- Branching while a session is actively running may not preserve all state
+- Long-running sessions can hold locks that block new messages (use `/stop` to release)
 
-### 16.2 Session Storage Location
+### Tool Changes Require /reset
 
-Sessions are stored by Hermes Agent in `~/.hermes/sessions/` on the host (`/opt/data/sessions/` in container). The WebUI reads from this directory via the gateway. If permissions are wrong (files owned by `root`), sessions won't load in the WebUI.
+Editing config.yaml or enabling/disabling tools mid-session does not reload them. You must `/reset` for changes to take effect.
 
-### 16.3 WebUI Itself Has No Authentication Backend
+### Memory Not in Cron Contexts
 
-The WebUI relies on Hermes Agent gateway's auth. If no `CLAUDE_PASSWORD` is set, the WebUI is open to anyone who can reach it. **Always run behind a reverse proxy with auth** if exposing remotely.
+`MEMORY.md` is only loaded in main (interactive) sessions. Cron jobs run in a different context and do not have access to your curated memory. Skills attached to cron jobs also run in this limited context.
 
-### 16.4 Tool Reload Requires New Session
+### Portal Mode (OpenClaw legacy)
 
-Changes to enabled toolsets in `config.yaml` don't take effect mid-session. `/reset` starts a new session with the updated tool list.
-
-### 16.5 Memory Edits Require New Session
-
-Editing memory files in the WebUI Memory browser doesn't automatically reload them into an active session. `/reset` starts a new session that picks up the changes.
-
-### 16.6 Portable Mode Limitations
-
-When using Portable mode (OpenAI-compatible API):
-- No session persistence — each page load is a fresh context
-- No skills loading
-- No memory persistence
-- No cron jobs
-- Full tool access depends on the backend server
-
-### 16.7 Hermes World (3D Environment)
-
-The 3D "Hermes World" environment is an experimental feature documented in `docs/hermesworld/`. It uses Three.js + React Three Fiber + Rapier physics. Not covered in this guide — see the dedicated docs in the workspace repository.
+Some UI elements reference "Portal mode" — this is legacy terminology from the OpenClaw migration. Functionality is the same under the new naming.
 
 ---
 
-*For the Hermes Agent backend guide, see [HERMES-AGENT-GUIDE.md](./HERMES-AGENT-GUIDE.md). For the skills guide, see [HERMES-SKILLS-GUIDE.md](./HERMES-SKILLS-GUIDE.md). For container quick reference, see [HERMES_CHEATSHEET.md](./HERMES_CHEATSHEET.md).*
+## Screenshots Reference
+
+Real screenshots from the Hermes WebUI repository (`/home/sean/.hermes/hermes-webui/docs/`):
+
+| Screenshot | Shows |
+|------------|-------|
+| `ui-workspace.png` | Full workspace layout with chat, files, terminal |
+| `ui-sessions.png` | Session management panel |
+| `workspace-rename.png` | Double-click rename in file browser |
+| `goal-status.png` | Goal evaluation status panel |
+| `system-health.png` | System health panel with component status |
+| `sidebar-fix.png` | Session sidebar behavior fix |
+| `insights-tokens.png` | Token usage by model over time |
+| `dashboard-nav.png` | Dashboard navigation link |
+| `compression-toast.png` | Context compression toast notification |
+| `claude-code-import.png` | Claude Code import (readonly) |
+
+Access them in the WebUI docs at `~/.hermes/hermes-webui/docs/pr-media/` or view them in the slideshow at `https://chonsong.github.io/hermes-guide/`.
