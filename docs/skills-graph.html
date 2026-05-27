@@ -405,7 +405,7 @@
     <div class="ctrl-section">
       <div class="ctrl-title">Edges</div>
       <label class="toggle-item" style="grid-column:span 2">
-        <input type="checkbox" id="edgeCategory" checked>
+        <input type="checkbox" id="edgeCategory">
         <div class="dot" style="background:var(--cat-devops)"></div> Same category
       </label>
       <label class="toggle-item" style="grid-column:span 2">
@@ -4739,11 +4739,13 @@ function buildGraph() {
 
   // Category edges (same category = strong)
   if (document.getElementById("edgeCategory").checked) {
-    for (const s of SKILLS) {
-      for (const t of SKILLS) {
-        if (s !== t && s.category === t.category) addEdge(s.name, t.name, "cat");
-      }
-    }
+    // Hub-spoke: connect each skill to its category hub
+    const cats = [...new Set(SKILLS.map(s => s.category))];
+    cats.forEach(cat => {
+      SKILLS.filter(s => s.category === cat).forEach(s => {
+        addEdge(s.name, "__hub__" + cat, "cat");
+      });
+    });
   }
 
   // Related skills edges
@@ -4815,7 +4817,7 @@ function initSim(nodes, edges) {
     .force("collide", d3.forceCollide().radius(d => d.r + 3))
     .force("gravity", d3.forceManyBody().strength(gravity))
     .alphaDecay(0.01)
-    .on("tick", () => render());
+    .on("tick", () => { if (simulation.alpha() > simulation.alphaMin() * 2) render(); });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -5025,6 +5027,9 @@ document.getElementById("ctx-gh").onclick = function() {
   window.open(ghUrl, "_blank");
   document.getElementById("ctx-menu").classList.remove("visible");
 };
+
+  // Final stable render when simulation settles
+  simulation.on("end", () => render());
 
 // ═══════════════════════════════════════════════════════════════
 //  CATEGORY HUB NODES
