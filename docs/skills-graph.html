@@ -53,6 +53,8 @@
   #tooltip .tt-meta { display: flex; flex-direction: column; gap: 2px; }
   #tooltip .tt-tag { display: inline-block; background: rgba(124,106,247,0.2); color: var(--accent); border-radius: 3px; padding: 1px 6px; font-size: 10px; margin-right: 3px; margin-bottom: 2px; }
   #tooltip .tt-cat { display: inline-block; border-radius: 3px; padding: 1px 6px; font-size: 10px; margin-right: 3px; color: #000; font-weight: 600; }
+  #tooltip .tt-star { display: inline-flex; align-items: center; gap: 3px; background: rgba(245,197,39,0.15); color: #f5c526; border-radius: 3px; padding: 1px 7px; font-size: 10px; margin-bottom: 4px; font-weight: 600; }
+  #tooltip .tt-star svg { flex-shrink: 0; }
   #canvas-wrap { flex: 1; position: relative; overflow: hidden; background: var(--bg); }
   #canvas-wrap svg { width: 100%; height: 100%; display: block; cursor: grab; }
   #canvas-wrap svg:active { cursor: grabbing; }
@@ -138,11 +140,12 @@
 
     <div class="ctrl-section">
       <div class="ctrl-title">Size by</div>
-      <select class="ctrl-select" id="sizeBy">
+<select class="ctrl-select" id="sizeBy">
         <option value="equal">Equal size</option>
         <option value="skillcount">Skill count per category</option>
-        <option value="tags">Tag breadth (more tags = larger)</option>
+        <option value="tags">Tag count</option>
         <option value="hub">Category hub (larger hubs)</option>
+        <option value="stars">Source repo stars</option>
       </select>
     </div>
 
@@ -187,6 +190,15 @@
 
 <script src="https://unpkg.com/d3@7/dist/d3.min.js"></script>
 <script>
+// Source repo → GitHub stars (169k for NousResearch/hermes-agent, all skills use hermes-agent source)
+const SOURCE_STARS = {
+  "hermes-agent": { repo: "NousResearch/hermes-agent", stars: 169422 }
+};
+function getStars(d) { return SOURCE_STARS[d.source]?.stars || 0; }
+function starBadgeHTML(stars) {
+  const s = stars > 0 ? stars.toLocaleString() : "—";
+  return `<span class="tt-star"><svg width="10" height="10" viewBox="0 0 16 16" fill="#f5c526"><path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4-3-3h4z"/></svg>${s}</span>`;
+}
 const SKILLS = [
 {"name":"codi","path":"/home/hermeswebui/.hermes/skills/codi","description":"Codi — code ingestion and refactoring agent. Specialized in understanding large codebases, refactoring, and code","tags":[],"size_mb":0.0,"is_local":true,"source":"hermes-agent"},
 {"name":"`-grill-me`","path":"/home/hermeswebui/.hermes/skills/`-grill-me`","description":"for non-code uses","tags":[],"size_mb":0.0,"is_local":true,"source":"hermes-agent"},
@@ -837,6 +849,7 @@ function renderGraph() {
       case "skillcount": base = minR + (maxR - minR) * (catCountLocal[n.category] || 1) / maxCount; break;
       case "tags": base = minR + (maxR - minR) * Math.min((n.tags || []).length / 5, 1); break;
       case "hub": base = n.isHub ? minR * 2.5 : minR; break;
+      case "stars": base = n.isHub ? minR * 2.5 : minR + (maxR - minR) * Math.min(getStars(n) / 200000, 1); break;
       default: base = (minR + maxR) / 2;
     }
     n.displayR = Math.max(minR, Math.min(maxR, base));
@@ -1019,7 +1032,7 @@ function onNodeHover(d) {
   const catColor = CAT_COLORS[d.category] || "#888";
   const catLabel = CAT_LABELS[d.category] || d.category;
   const tags = d.tags || [];
-  document.getElementById("tt-meta").innerHTML = `<span class="tt-cat" style="background:${catColor}">${catLabel}</span> ${tags.slice(0, 6).map(t => `<span class="tt-tag">${t}</span>`).join("")}`;
+  document.getElementById("tt-meta").innerHTML = starBadgeHTML(getStars(d)) + `<span class="tt-cat" style="background:${catColor}">${catLabel}</span> ${tags.slice(0, 6).map(t => `<span class="tt-tag">${t}</span>`).join("")}`;
   const rect = document.getElementById("canvas-wrap").getBoundingClientRect();
   let tx = d3.event.sourceEvent.clientX + 16, ty = d3.event.sourceEvent.clientY - 10;
   if (tx + 250 > rect.right) tx = d3.event.sourceEvent.clientX - 250;
